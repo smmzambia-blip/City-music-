@@ -539,9 +539,16 @@ function NewsView() {
   };
 
   const runBot = async () => {
+    if (!auth.currentUser) return alert('Not authenticated');
+    
     setBotRunning(true);
     try {
-      const res = await fetch('/api/cron/auto-post');
+      const token = await auth.currentUser.getIdToken();
+      const res = await fetch('/api/cron/auto-post', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       let data;
       try {
         data = await res.json();
