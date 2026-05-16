@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { auth, db } from '../../lib/firebase';
-import { collection, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, getDocs, doc, setDoc, serverTimestamp, query, orderBy, limit } from 'firebase/firestore';
 import { LayoutDashboard, Music, Users, FileText, Settings, LogOut, Plus, Type, Palette } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
@@ -83,6 +83,26 @@ export default function AdminDashboardClient() {
 }
 
 function DashboardView() {
+  const [stats, setStats] = useState({ songs: 0, artists: 0, news: 0 });
+
+  useEffect(() => {
+    async function fetchStats() {
+      try {
+        const songsSnap = await getDocs(collection(db, 'songs'));
+        const artistsSnap = await getDocs(collection(db, 'artists'));
+        const newsSnap = await getDocs(collection(db, 'news'));
+        setStats({
+          songs: songsSnap.size,
+          artists: artistsSnap.size,
+          news: newsSnap.size
+        });
+      } catch (err) {
+        console.error("Failed fetching stats", err);
+      }
+    }
+    fetchStats();
+  }, []);
+
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <h2 className="text-2xl font-black italic tracking-tighter uppercase mb-6">At a Glance</h2>
@@ -90,15 +110,15 @@ function DashboardView() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
         <div className="bg-zinc-50 border border-zinc-100 p-6 rounded-2xl">
            <p className="text-zinc-400 text-[10px] font-black uppercase tracking-widest mb-1">Total Songs</p>
-           <p className="text-3xl font-black italic tracking-tighter">842</p>
+           <p className="text-3xl font-black italic tracking-tighter">{stats.songs}</p>
         </div>
         <div className="bg-zinc-50 border border-zinc-100 p-6 rounded-2xl">
            <p className="text-zinc-400 text-[10px] font-black uppercase tracking-widest mb-1">Total Artists</p>
-           <p className="text-3xl font-black italic tracking-tighter">156</p>
+           <p className="text-3xl font-black italic tracking-tighter">{stats.artists}</p>
         </div>
         <div className="bg-zinc-50 border border-zinc-100 p-6 rounded-2xl">
            <p className="text-zinc-400 text-[10px] font-black uppercase tracking-widest mb-1">Total News</p>
-           <p className="text-3xl font-black italic tracking-tighter">43</p>
+           <p className="text-3xl font-black italic tracking-tighter">{stats.news}</p>
         </div>
       </div>
       
@@ -118,6 +138,42 @@ function SongsView() {
   const [adding, setAdding] = useState(false);
   const [instantIndex, setInstantIndex] = useState(true);
   
+  const [title, setTitle] = useState('');
+  const [artist, setArtist] = useState('');
+  const [audioUrl, setAudioUrl] = useState('');
+  const [coverImage, setCoverImage] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const handlePublish = async () => {
+    if(!title || !artist || !audioUrl || !coverImage) return alert('All fields required');
+    if(!auth.currentUser) return alert('Not authenticated');
+    
+    setSubmitting(true);
+    try {
+      const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + Date.now();
+      const songId = slug.substring(0, 128); // to be safe
+      
+      await setDoc(doc(db, 'songs', songId), {
+        title,
+        artist,
+        audioUrl,
+        coverImage,
+        plays: 0,
+        slug,
+        userId: auth.currentUser.uid,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+      alert('Song Published!');
+      setTitle(''); setArtist(''); setAudioUrl(''); setCoverImage('');
+      setAdding(false);
+    } catch(err: any) {
+      alert("Error: " + err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
        <div className="flex justify-between items-center border-b border-zinc-100 pb-4">
@@ -131,10 +187,10 @@ function SongsView() {
          <div className="bg-zinc-50 border border-zinc-200 p-6 rounded-2xl">
            <h3 className="font-black uppercase tracking-widest text-sm mb-4">Post a new song</h3>
            <div className="space-y-4">
-             <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Title</label><input type="text" className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00FF00]" placeholder="Song Title" /></div>
-             <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Artist</label><input type="text" className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00FF00]" placeholder="Artist Name" /></div>
-             <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Audio URL or Upload</label><input type="text" className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00FF00]" placeholder="https://..." /></div>
-             <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Cover Art URL</label><input type="text" className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00FF00]" placeholder="https://..." /></div>
+             <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Title</label><input type="text" value={title} onChange={(e)=>setTitle(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00FF00]" placeholder="Song Title" /></div>
+             <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Artist</label><input type="text" value={artist} onChange={(e)=>setArtist(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00FF00]" placeholder="Artist Name" /></div>
+             <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Audio URL (Google Drive/S3/Direct)</label><input type="text" value={audioUrl} onChange={(e)=>setAudioUrl(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00FF00]" placeholder="https://..." /></div>
+             <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Cover Art URL</label><input type="text" value={coverImage} onChange={(e)=>setCoverImage(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00FF00]" placeholder="https://..." /></div>
              
              <div className="flex items-center gap-3 py-2">
                <input 
@@ -149,13 +205,15 @@ function SongsView() {
                </label>
              </div>
 
-             <button className="bg-black text-white px-6 py-3 rounded-full font-black uppercase tracking-widest text-xs hover:bg-[#00FF00] hover:text-black transition">Publish Song</button>
+             <button onClick={handlePublish} disabled={submitting} className="bg-black text-white px-6 py-3 rounded-full font-black uppercase tracking-widest text-xs hover:bg-[#00FF00] hover:text-black transition">
+                {submitting ? 'Publishing...' : 'Publish Song'}
+             </button>
            </div>
          </div>
        ) : (
          <div className="text-center py-20 bg-zinc-50 border border-zinc-100 rounded-2xl">
             <Music className="w-10 h-10 mx-auto text-zinc-300 mb-4" />
-            <p className="font-bold uppercase tracking-widest text-zinc-400 text-xs">No songs uploaded yet.</p>
+            <p className="font-bold uppercase tracking-widest text-zinc-400 text-xs">No songs uploaded yet, or loading...</p>
          </div>
        )}
     </div>
@@ -196,6 +254,38 @@ function ArtistsView() {
 function NewsView() {
   const [adding, setAdding] = useState(false);
   const [instantIndex, setInstantIndex] = useState(true);
+
+  const [headline, setHeadline] = useState('');
+  const [content, setContent] = useState('');
+  const [featuredImage, setFeaturedImage] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const handlePublish = async () => {
+    if(!headline || !content) return alert('Headline and content required');
+    if(!auth.currentUser) return alert('Not authenticated');
+    
+    setSubmitting(true);
+    try {
+      const newsId = headline.toLowerCase().replace(/[^a-z0-9]+/g, '-').substring(0, 100) + '-' + Date.now();
+      
+      await setDoc(doc(db, 'news', newsId), {
+        headline,
+        content,
+        featuredImage: featuredImage || '',
+        userId: auth.currentUser.uid,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+      alert('News Published!');
+      setHeadline(''); setContent(''); setFeaturedImage('');
+      setAdding(false);
+    } catch(err: any) {
+      alert("Error: " + err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
        <div className="flex justify-between items-center border-b border-zinc-100 pb-4">
@@ -209,9 +299,9 @@ function NewsView() {
          <div className="bg-zinc-50 border border-zinc-200 p-6 rounded-2xl">
            <h3 className="font-black uppercase tracking-widest text-sm mb-4">Write an Article</h3>
            <div className="space-y-4">
-             <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Headline</label><input type="text" className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00FF00]" placeholder="Breaking News..." /></div>
-             <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Content</label><textarea className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00FF00]" rows={6} placeholder="Write news article here..."></textarea></div>
-             <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Featured Image URL</label><input type="text" className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00FF00]" placeholder="https://..." /></div>
+             <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Headline</label><input type="text" value={headline} onChange={(e)=>setHeadline(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00FF00]" placeholder="Breaking News..." /></div>
+             <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Content</label><textarea value={content} onChange={(e)=>setContent(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00FF00]" rows={6} placeholder="Write news article here..."></textarea></div>
+             <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Featured Image URL</label><input type="text" value={featuredImage} onChange={(e)=>setFeaturedImage(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00FF00]" placeholder="https://..." /></div>
              
              <div className="flex items-center gap-3 py-2">
                <input 
@@ -226,13 +316,15 @@ function NewsView() {
                </label>
              </div>
 
-             <button className="bg-black text-white px-6 py-3 rounded-full font-black uppercase tracking-widest text-xs hover:bg-[#00FF00] hover:text-black transition">Publish Article</button>
+             <button onClick={handlePublish} disabled={submitting} className="bg-black text-white px-6 py-3 rounded-full font-black uppercase tracking-widest text-xs hover:bg-[#00FF00] hover:text-black transition">
+                {submitting ? 'Publishing...' : 'Publish Article'}
+             </button>
            </div>
          </div>
        ) : (
          <div className="text-center py-20 bg-zinc-50 border border-zinc-100 rounded-2xl">
             <FileText className="w-10 h-10 mx-auto text-zinc-300 mb-4" />
-            <p className="font-bold uppercase tracking-widest text-zinc-400 text-xs">No news published yet.</p>
+            <p className="font-bold uppercase tracking-widest text-zinc-400 text-xs">No news published yet, or loading...</p>
          </div>
        )}
     </div>

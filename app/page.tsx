@@ -1,14 +1,28 @@
+'use client';
+
 import Link from 'next/link';
 import { Play } from 'lucide-react';
-
-const mockSongs = [
-  { id: '1', slug: 'blinding-lights', title: 'Blessed', artist: 'Pompi feat. Mag44', plays: '1.2k', cover: 'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?auto=format&fit=crop&q=80&w=300&h=300' },
-  { id: '2', slug: 'chikonko', title: 'Chikonko', artist: 'Micky 2', plays: '840', cover: 'https://images.unsplash.com/photo-1493225457124-a1a2a5f5cb46?auto=format&fit=crop&q=80&w=300&h=300' },
-  { id: '3', slug: 'nalutekwa', title: 'Nalutekwa', artist: 'Chile One MrZambia', plays: '2.5k', cover: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&q=80&w=300&h=300' },
-  { id: '4', slug: 'pempelo', title: 'Pempelo', artist: 'Chef 187', plays: '1.9k', cover: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&q=80&w=300&h=300' },
-];
+import { useState, useEffect } from 'react';
+import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
+import { db } from '../lib/firebase';
 
 export default function HomePage() {
+  const [songs, setSongs] = useState<any[]>([]);
+
+  useEffect(() => {
+    async function fetchSongs() {
+      try {
+        const q = query(collection(db, 'songs'), orderBy('createdAt', 'desc'), limit(10));
+        const snap = await getDocs(q);
+        const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setSongs(data);
+      } catch(err) {
+        console.error(err);
+      }
+    }
+    fetchSongs();
+  }, []);
+
   return (
     <div className="flex-1 space-y-12">
       {/* Hero Section */}
@@ -40,7 +54,7 @@ export default function HomePage() {
             </div>
             
             <div className="space-y-4">
-              {mockSongs.slice(0, 3).map((song, i) => (
+              {songs.slice(0, 3).map((song, i) => (
                 <Link 
                   key={`trending-${song.id}`}
                   href={`/song/${song.slug}`}
@@ -48,14 +62,14 @@ export default function HomePage() {
                 >
                   <span className="text-3xl font-black text-zinc-100 italic w-12 text-center group-hover:text-[#00FF00] transition-colors">0{i+1}</span>
                   <div className="w-20 h-20 bg-zinc-100 rounded-xl overflow-hidden shadow-sm flex-shrink-0">
-                    <img src={song.cover} alt={song.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                    <img src={song.coverImage} alt={song.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <h4 className="font-extrabold text-lg text-black truncate">{song.title}</h4>
                     <p className="text-xs font-bold text-zinc-400 uppercase tracking-wider">{song.artist}</p>
                     <div className="flex items-center gap-4 mt-2">
-                       <span className="text-[10px] font-black text-[#00FF00] bg-[#00FF00]/10 px-2 py-0.5 rounded italic">Trending +{15 - i*2}%</span>
-                       <span className="text-[10px] font-bold text-zinc-300 uppercase">{song.plays} Plays</span>
+                       <span className="text-[10px] font-black text-[#00FF00] bg-[#00FF00]/10 px-2 py-0.5 rounded italic">Trending +{Math.max(1, 15 - i*2)}%</span>
+                       <span className="text-[10px] font-bold text-zinc-300 uppercase">{song.plays || 0} Plays</span>
                     </div>
                   </div>
                   <div className="w-12 h-12 rounded-full border-2 border-zinc-100 flex items-center justify-center text-zinc-200 group-hover:bg-[#00FF00] group-hover:border-transparent group-hover:text-black transition-all">
@@ -63,6 +77,7 @@ export default function HomePage() {
                   </div>
                 </Link>
               ))}
+              {songs.length === 0 && <p className="text-zinc-500 text-sm italic py-4">No trending songs found.</p>}
             </div>
           </section>
 
@@ -79,16 +94,16 @@ export default function HomePage() {
             </div>
             
             <div className="space-y-3">
-              {mockSongs.map((song, idx) => (
+              {songs.map((song, idx) => (
                 <div 
-                  key={song.id} 
+                  key={`latest-${song.id}`} 
                   className="group flex flex-col sm:flex-row sm:items-center gap-4 p-3 bg-zinc-50 border border-transparent rounded-2xl hover:bg-white hover:border-zinc-100 hover:shadow-xl transition-all duration-300"
                 >
                   <div className="flex items-center gap-4 flex-1">
                     <span className="text-xs font-black text-zinc-300 w-4 text-center group-hover:text-black transition-colors hidden sm:block">{idx + 1}</span>
                     <div className="relative w-16 h-16 sm:w-14 sm:h-14 bg-zinc-200 rounded-xl overflow-hidden shadow-sm flex-shrink-0">
                       <img
-                        src={song.cover}
+                        src={song.coverImage}
                         alt={song.title}
                         className="absolute inset-0 object-cover w-full h-full group-hover:scale-110 transition duration-500"
                       />
@@ -106,7 +121,7 @@ export default function HomePage() {
                   
                   <div className="flex items-center justify-between sm:justify-end gap-6 sm:w-64 mt-2 sm:mt-0 px-2 sm:px-0">
                     <div className="flex gap-4">
-                      <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-1.5"><Play className="w-3 h-3 text-zinc-300" /> {song.plays}</span>
+                      <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-1.5"><Play className="w-3 h-3 text-zinc-300" /> {song.plays || 0}</span>
                       <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-1.5"><svg className="w-3 h-3 text-zinc-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> 3:45</span>
                     </div>
                     <button className="w-8 h-8 rounded-full border border-zinc-200 flex items-center justify-center text-zinc-400 group-hover:border-black group-hover:bg-black group-hover:text-[#00FF00] transition-all hover:scale-105 active:scale-95 shadow-sm">
@@ -115,6 +130,7 @@ export default function HomePage() {
                   </div>
                 </div>
               ))}
+              {songs.length === 0 && <p className="text-zinc-500 text-sm italic py-4">No latest dropped songs found.</p>}
             </div>
           </section>
         </div>
