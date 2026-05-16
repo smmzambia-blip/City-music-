@@ -56,14 +56,10 @@ export default function Navbar() {
                   {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
                 </button>
              </div>
-             <div className="flex items-center gap-4">
-                <Link href="/login" className="text-zinc-500 hover:text-black transition-colors">
-                  <UserCircle2 className="w-6 h-6" />
-                </Link>
-             </div>
+             {/* Removed login link for users */}
           </div>
 
-          {/* Right Side: Search & Profile - Desktop */}
+          {/* Right Side: Search - Desktop */}
           <div className="hidden md:flex items-center justify-end space-x-6">
             <div className="flex items-center relative group">
                <Search className="w-4 h-4 absolute left-3 text-zinc-300 group-focus-within:text-[#00FF00] transition-colors" />
@@ -73,10 +69,6 @@ export default function Navbar() {
                  className="bg-zinc-50 border-zinc-100 border rounded-full py-1.5 pl-9 pr-4 text-[10px] uppercase font-bold tracking-widest w-48 focus:w-64 transition-all outline-none focus:ring-1 focus:ring-[#00FF00]/30"
                />
             </div>
-            <Link href="/login" className="text-zinc-500 hover:text-black transition-colors flex items-center gap-2">
-              <span className="text-[10px] font-black uppercase tracking-widest hidden lg:block">Account</span>
-              <UserCircle2 className="w-6 h-6" />
-            </Link>
           </div>
         </div>
       </div>
@@ -106,18 +98,11 @@ export default function Navbar() {
              ))}
              <div className="pt-8 w-full border-t border-zinc-100 flex flex-col items-center gap-6">
                 <Link
-                  href="/admin"
-                  className="text-sm font-bold uppercase tracking-widest text-zinc-400"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Admin Panel
-                </Link>
-                <Link
                   href="/login"
-                  className="bg-black text-[#00FF00] px-12 py-4 rounded-full font-black uppercase tracking-widest shadow-xl"
+                  className="text-sm font-bold uppercase tracking-widest text-zinc-300 hover:text-black"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
-                  Sign In
+                  Admin Login
                 </Link>
              </div>
            </div>
