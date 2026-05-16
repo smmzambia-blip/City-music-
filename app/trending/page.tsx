@@ -3,7 +3,7 @@
 import { Play } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
+import { collection, query, orderBy, limit, onSnapshot } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 
 export default function TrendingPage() {
@@ -11,28 +11,26 @@ export default function TrendingPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchTrending() {
-      try {
-        const q = query(collection(db, 'songs'), orderBy('plays', 'desc'), limit(50));
-        const snap = await getDocs(q);
-        const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        
-        // If plays are all 0, we'll just show them in the order added, 
-        // to make sure it's not totally empty if someone just added songs without views yet.
-        if (data.length === 0) {
-           const backupQ = query(collection(db, 'songs'), orderBy('createdAt', 'desc'), limit(50));
-           const backupSnap = await getDocs(backupQ);
-           setSongs(backupSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-        } else {
-           setSongs(data);
-        }
-      } catch(err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
+    const q = query(collection(db, 'songs'), orderBy('plays', 'desc'), limit(50));
+    const unsubscribe = onSnapshot(q, (snap) => {
+      const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      
+      // Secondary sort memory fallback if all plays are 0, sort by created
+      if (data.every(s => !s.plays || s.plays === 0)) {
+         data.sort((a, b) => {
+            const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+            const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+            return timeB - timeA;
+         });
       }
-    }
-    fetchTrending();
+      setSongs(data);
+      setLoading(false);
+    }, (err) => {
+      console.error(err);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   return (

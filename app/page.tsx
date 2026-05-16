@@ -3,24 +3,22 @@
 import Link from 'next/link';
 import { Play } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
+import { collection, query, orderBy, limit, onSnapshot } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 
 export default function HomePage() {
   const [songs, setSongs] = useState<any[]>([]);
 
   useEffect(() => {
-    async function fetchSongs() {
-      try {
-        const q = query(collection(db, 'songs'), orderBy('createdAt', 'desc'), limit(10));
-        const snap = await getDocs(q);
-        const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setSongs(data);
-      } catch(err) {
-        console.error(err);
-      }
-    }
-    fetchSongs();
+    const q = query(collection(db, 'songs'), orderBy('createdAt', 'desc'), limit(10));
+    const unsubscribe = onSnapshot(q, (snap) => {
+      const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setSongs(data);
+    }, (error) => {
+      console.error(error);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   return (
