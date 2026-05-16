@@ -506,6 +506,7 @@ function NewsView() {
   const [submitting, setSubmitting] = useState(false);
   const [publishStep, setPublishStep] = useState('');
   const [botRunning, setBotRunning] = useState(false);
+  const [botStep, setBotStep] = useState('');
 
   useEffect(() => {
     const path = 'news';
@@ -587,41 +588,41 @@ function NewsView() {
     if (!auth.currentUser) return alert('Not authenticated');
     
     setBotRunning(true);
+    setBotStep('Connecting to AI...');
     try {
       const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
       if (!apiKey) {
         throw new Error('Gemini API Key (NEXT_PUBLIC_GEMINI_API_KEY) not found in environment. Please check your AI Studio secrets.');
       }
 
-      console.log('Bot is researching and writing...');
+      setBotStep('Researching Zambian music scene...');
       const ai = new GoogleGenAI({ apiKey });
       
-      const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: "Generate a breaking news story about the Zambian music scene. " +
-                  "Include a 'headline' and 'content' (about 3-4 paragraphs). " +
-                  "Format the response exactly as a JSON object with keys 'headline' and 'content'.",
-        config: {
+      const response = await ai.getGenerativeModel({ model: "gemini-1.5-flash" }).generateContent({
+        contents: [{ role: "user", parts: [{ text: "Write a short breaking news story (150 words max) about a new music release or concert in Zambia. Return ONLY a JSON object: {\"headline\": \"...\", \"content\": \"...\"}" }] }],
+        generationConfig: {
           responseMimeType: "application/json",
+          temperature: 0.7,
         }
       });
 
-      const rawText = response.text;
+      setBotStep('Formatting article...');
+      const rawText = response.response.text();
       let newsData;
       try {
-        // Clean up markdown code blocks if present
         const cleanText = rawText.replace(/```json\n?|```/g, '').trim();
         newsData = JSON.parse(cleanText);
       } catch (e) {
         console.error('JSON parse error. Raw text:', rawText);
-        throw new Error('Gemini returned an invalid JSON format. Please try again.');
+        throw new Error('AI returned invalid format. Retrying...');
       }
 
-      // Choose a random music-related image from placeholder
-      const seeds = ['music', 'concert', 'studio', 'artist', 'stage', 'microphone', 'guitar'];
+      setBotStep('Picking featured image...');
+      const seeds = ['music', 'concert', 'studio', 'artist', 'stage', 'microphone', 'guitar', 'dj', 'crowd'];
       const randomSeed = seeds[Math.floor(Math.random() * seeds.length)];
       const imageUrl = `https://picsum.photos/seed/${randomSeed}-${Date.now()}/800/600`;
 
+      setBotStep('Saving to ZedTunes feed...');
       const botPost = {
         headline: newsData.headline,
         content: newsData.content,
@@ -631,10 +632,11 @@ function NewsView() {
         updatedAt: serverTimestamp()
       };
 
-      // Save to Firestore using Client SDK
-      const docRef = await addDoc(collection(db, 'news'), botPost);
+      await addDoc(collection(db, 'news'), botPost);
       
-      alert('Bot finished successfully! Post created: ' + newsData.headline);
+      setBotStep('Success!');
+      setTimeout(() => setBotStep(''), 2000);
+      alert('Bot Published: ' + newsData.headline);
     } catch (err: any) {
       console.error('Bot Error:', err);
       alert('Bot failed: ' + err.message);
@@ -651,9 +653,9 @@ function NewsView() {
             <button 
               onClick={runBot} 
               disabled={botRunning}
-              className="flex items-center gap-2 bg-black text-[var(--color-primary)] px-4 py-2 rounded-full font-black uppercase tracking-widest text-xs hover:opacity-80 transition disabled:opacity-50"
+              className="flex items-center gap-2 bg-black text-[var(--color-primary)] px-4 py-2 rounded-full font-black uppercase tracking-widest text-[10px] hover:opacity-80 transition disabled:opacity-50"
             >
-              {botRunning ? 'Bot is researching & writing...' : 'Run Auto-Post Bot'}
+              {botRunning ? (botStep || 'Bot is active...') : 'Run Auto-Post Bot'}
             </button>
             <button onClick={()=>setAdding(!adding)} className="flex items-center gap-2 bg-[var(--color-primary)] text-black px-4 py-2 rounded-full font-black uppercase tracking-widest text-xs hover:bg-black hover:text-[var(--color-primary)] transition">
               {adding ? 'Cancel' : <><Plus className="w-4 h-4"/> Publish News</>}
