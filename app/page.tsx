@@ -192,24 +192,24 @@ export default function HomePage() {
           </div>
 
           <div className="bg-zinc-50 rounded-3xl p-6 border border-zinc-100">
-            <h3 className="text-xs font-black text-zinc-300 uppercase tracking-[3px] mb-6 underline decoration-[var(--color-primary)] decoration-2 underline-offset-8">Zambia Top 5</h3>
+            <h3 className="text-xs font-black text-zinc-300 uppercase tracking-[3px] mb-6 underline decoration-[var(--color-primary)] decoration-2 underline-offset-8">Latest News</h3>
             <div className="space-y-6">
-              {[
-                { rank: '01', title: 'Single for the Night', artist: 'Yo Maps', stat: '+14%' },
-                { rank: '02', title: 'Akatonitaka', artist: 'F Jay', stat: '-' },
-                { rank: '03', title: 'Somone', artist: 'Yo Maps', stat: '+5%' },
-                { rank: '04', title: 'Blessed', artist: 'Pompi', stat: '+2%' },
-                { rank: '05', title: 'Pempelo', artist: 'Chef 187', stat: 'New' },
-              ].map(item => (
-                <div key={item.rank} className="flex items-center gap-4 group cursor-pointer">
-                  <span className="text-2xl font-black text-zinc-200 italic group-hover:text-[var(--color-primary)] transition-colors">{item.rank}</span>
-                  <div className="flex-1 overflow-hidden">
-                    <p className="text-sm font-black truncate text-zinc-800">{item.title}</p>
-                    <p className="text-[10px] font-bold text-zinc-400 truncate uppercase mt-0.5">{item.artist}</p>
-                  </div>
-                  <div className={`text-[10px] font-black ${item.stat === '-' ? 'text-zinc-300' : 'text-[var(--color-primary)]'}`}>{item.stat}</div>
-                </div>
-              ))}
+              {news.length > 0 ? (
+                news.map((item) => (
+                  <Link key={`side-news-${item.id}`} href="/news" className="flex gap-3 group">
+                    <div className="w-12 h-12 rounded-xl overflow-hidden bg-zinc-200 shrink-0">
+                      <img src={item.featuredImage} alt={item.headline} className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[11px] font-black leading-tight text-zinc-800 line-clamp-2 group-hover:text-[var(--color-primary)] transition-colors">{item.headline}</p>
+                      <span className="text-[8px] font-black text-zinc-400 uppercase tracking-widest mt-1 block">Zambia Music News</span>
+                    </div>
+                  </Link>
+                ))
+              ) : (
+                <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest italic">No news yet...</p>
+              )}
+              <Link href="/news" className="block mt-4 text-center py-2 border border-black rounded-xl text-[10px] font-black uppercase tracking-widest text-black hover:bg-black hover:text-[var(--color-primary)] transition-colors">Read All Stories</Link>
             </div>
           </div>
         </div>
