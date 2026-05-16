@@ -27,6 +27,34 @@
         "role": { "type": "string", "enum": ["admin"] }
       },
       "required": ["email", "role"]
+    },
+    "News": {
+      "title": "News",
+      "description": "News article",
+      "type": "object",
+      "properties": {
+        "headline": { "type": "string" },
+        "content": { "type": "string" },
+        "featuredImage": { "type": "string" },
+        "userId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["headline", "content", "featuredImage", "userId", "createdAt", "updatedAt"]
+    },
+    "Artist": {
+      "title": "Artist",
+      "description": "Artist profile",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "biography": { "type": "string" },
+        "photoUrl": { "type": "string" },
+        "userId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "biography", "photoUrl", "userId", "createdAt", "updatedAt"]
     }
   },
   "firestore": {
@@ -37,6 +65,14 @@
     "admins/{adminId}": {
       "schema": { "$ref": "#/entities/Admin" },
       "description": "Collection of admins"
+    },
+    "news/{newsId}": {
+      "schema": { "$ref": "#/entities/News" },
+      "description": "Collection of news posts"
+    },
+    "artists/{artistId}": {
+      "schema": { "$ref": "#/entities/Artist" },
+      "description": "Collection of artists"
     }
   }
 }
