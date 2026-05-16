@@ -340,6 +340,7 @@ function NewsView() {
   const [content, setContent] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [botRunning, setBotRunning] = useState(false);
 
   const handlePublish = async () => {
     if(!headline || !content || !file) return alert('Headline, content, and expected featured image are required');
@@ -375,13 +376,43 @@ function NewsView() {
     }
   };
 
+  const runBot = async () => {
+    setBotRunning(true);
+    try {
+      const res = await fetch('/api/cron/auto-post');
+      const data = await res.json();
+      if (data.success) {
+        alert('Bot finished successfully! Post created: ' + data.post.headline);
+      } else {
+        alert('Bot failed: ' + (data.details || data.error));
+      }
+    } catch (err: any) {
+      alert('Network error running bot: ' + err.message);
+    } finally {
+      setBotRunning(false);
+    }
+  };
+
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
        <div className="flex justify-between items-center border-b border-zinc-100 pb-4">
          <h2 className="text-2xl font-black italic tracking-tighter uppercase">News & Blog</h2>
-         <button onClick={()=>setAdding(!adding)} className="flex items-center gap-2 bg-[var(--color-primary)] text-black px-4 py-2 rounded-full font-black uppercase tracking-widest text-xs hover:bg-black hover:text-[var(--color-primary)] transition">
-           {adding ? 'Cancel' : <><Plus className="w-4 h-4"/> Publish News</>}
-         </button>
+         <div className="flex gap-2">
+            <button 
+              onClick={runBot} 
+              disabled={botRunning}
+              className="flex items-center gap-2 bg-black text-[var(--color-primary)] px-4 py-2 rounded-full font-black uppercase tracking-widest text-xs hover:opacity-80 transition disabled:opacity-50"
+            >
+              {botRunning ? 'Bot Running...' : 'Run Auto-Post Bot'}
+            </button>
+            <button onClick={()=>setAdding(!adding)} className="flex items-center gap-2 bg-[var(--color-primary)] text-black px-4 py-2 rounded-full font-black uppercase tracking-widest text-xs hover:bg-black hover:text-[var(--color-primary)] transition">
+              {adding ? 'Cancel' : <><Plus className="w-4 h-4"/> Publish News</>}
+            </button>
+         </div>
+       </div>
+
+       <div className="p-4 bg-zinc-50 border border-zinc-200 rounded-2xl text-xs font-medium text-zinc-600">
+          <strong>Pro Tip:</strong> The "Auto-Post Bot" uses Gemini AI to automatically research and write Zambian music news. You can trigger this automatically every day by pointing a cron service to <code>/api/cron/auto-post</code>.
        </div>
        
        {adding ? (

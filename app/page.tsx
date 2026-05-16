@@ -8,6 +8,7 @@ import { db } from '../lib/firebase';
 
 export default function HomePage() {
   const [songs, setSongs] = useState<any[]>([]);
+  const [news, setNews] = useState<any[]>([]);
 
   useEffect(() => {
     const q = query(collection(db, 'songs'), orderBy('createdAt', 'desc'), limit(10));
@@ -18,7 +19,18 @@ export default function HomePage() {
       console.error(error);
     });
 
-    return () => unsubscribe();
+    const newsQ = query(collection(db, 'news'), orderBy('createdAt', 'desc'), limit(3));
+    const unsubscribeNews = onSnapshot(newsQ, (snap) => {
+      const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setNews(data);
+    }, (error) => {
+      console.error(error);
+    });
+
+    return () => {
+      unsubscribe();
+      unsubscribeNews();
+    };
   }, []);
 
   return (
@@ -167,6 +179,28 @@ export default function HomePage() {
               ))}
             </div>
           </div>
+
+          {news.length > 0 && (
+            <div>
+              <h3 className="text-xs font-black text-zinc-300 uppercase tracking-[3px] mb-6">Trending News</h3>
+              <div className="space-y-4">
+                {news.map((item) => (
+                  <Link key={item.id} href="/news" className="block group">
+                    <div className="flex gap-3">
+                      <div className="w-16 h-16 rounded-xl overflow-hidden bg-zinc-100 shrink-0">
+                        <img src={item.featuredImage} alt={item.headline} className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
+                      </div>
+                      <div className="min-w-0">
+                        <h4 className="text-xs font-black line-clamp-2 leading-tight group-hover:text-[var(--color-primary)] transition-colors text-black">{item.headline}</h4>
+                        <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mt-1 block">Zambia News</span>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+              <Link href="/news" className="block mt-4 text-center py-2 border border-zinc-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-zinc-400 hover:bg-black hover:text-[var(--color-primary)] transition-colors">View All News</Link>
+            </div>
+          )}
         </div>
       </div>
     </div>

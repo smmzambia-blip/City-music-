@@ -1,12 +1,18 @@
 import { NextResponse } from 'next/server';
+import { GoogleGenAI } from "@google/genai";
+import * as admin from 'firebase-admin';
+import { getFirestore } from 'firebase-admin/firestore';
 
-// This API Route acts as a Cron Job handler.
-// To run this automatically, use a free service like cron-job.org
-// and point it to your production URL + /api/cron/auto-post.
-// If using CRON_SECRET, add an Authorization header in your cron service:
-// Authorization: Bearer YOUR_CRON_SECRET
+// Initialize Firebase Admin
+if (!admin.apps.length) {
+  admin.initializeApp({
+    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'thermal-pursuit-s07pf',
+  });
+}
+const db = getFirestore('ai-studio-63b9b9ad-19dc-4719-ada9-985e7f65a884');
+
 export async function GET(request: Request) {
-  // 1. Security: Ensure only authorized webhook/cron schedulers can trigger this
+  // Security check
   const authHeader = request.headers.get('authorization');
   if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     console.warn('[Cron] Unauthorized auto-post attempt');
@@ -14,45 +20,48 @@ export async function GET(request: Request) {
   }
 
   try {
-    console.log('[Cron] Executing auto-post routine...');
+    console.log('[Cron] Fetching news from Gemini...');
     
-    // 2. Fetch live data (e.g., from NewsAPI, rapidapi, or web scraping)
-    // const res = await fetch(`https://newsapi.org/v2/top-headlines?category=sports&apiKey=${process.env.NEWS_API_KEY}`);
-    // const data = await res.json();
-    // const article = data.articles[0];
+    const ai = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY as string });
+    
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: "Generate a breaking news story about the Zambian music scene. " +
+                "Include a 'headline' and 'content' (about 3-4 paragraphs). " +
+                "Format the response exactly as a JSON object with keys 'headline' and 'content'.",
+      config: {
+        responseMimeType: "application/json",
+      }
+    });
 
-    // 3. ENFORCE COVER ART:
-    // If the fetched article doesn't have an image, we assign a rich fallback image automatically.
-    const fallbackImage = `https://picsum.photos/seed/${Date.now()}/800/600`;
-    // const finalCoverArt = article.urlToImage || fallbackImage;
-    const finalCoverArt = fallbackImage;
+    const newsData = JSON.parse(response.text);
+    
+    // Choose a random music-related image from placeholder
+    const seeds = ['music', 'concert', 'studio', 'artist', 'stage', 'microphone', 'guitar'];
+    const randomSeed = seeds[Math.floor(Math.random() * seeds.length)];
+    const imageUrl = `https://picsum.photos/seed/${randomSeed}-${Date.now()}/800/600`;
 
     const botPost = {
-      headline: `Automated Update: ${new Date().toLocaleTimeString()}`,
-      content: "This is an automated background post. It will ALWAYS include cover art, regardless of whether the original source provided an image.",
-      featuredImage: finalCoverArt, // GUARANTEED COVER ART
-      userId: 'system-auto-bot',    // Bot identifier
-      createdAt: new Date(),
-      updatedAt: new Date()
+      headline: newsData.headline,
+      content: newsData.content,
+      featuredImage: imageUrl,
+      userId: 'system-auto-bot',
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
     };
 
-    // 4. Save to Database:
-    // IMPORTANT: Since this runs in the background (no logged-in user), 
-    // it will fail your Firestore Security Rules if you use the standard client SDK.
-    // Instead, you must install and initialize 'firebase-admin' to securely push data:
-    // 
-    // import * as admin from 'firebase-admin';
-    // await admin.firestore().collection('news').add(botPost);
+    // Save to Firestore using Admin SDK
+    const docRef = await db.collection('news').add(botPost);
 
-    console.log('[Cron] Generated post with cover art:', botPost.featuredImage);
+    console.log('[Cron] Success! Created news post:', docRef.id);
 
     return NextResponse.json({ 
       success: true, 
-      message: 'Background auto-posting completed with guaranteed cover art.',
-      post: botPost 
+      id: docRef.id,
+      post: newsData 
     });
   } catch (err: any) {
     console.error('[Cron] Error:', err);
-    return NextResponse.json({ error: 'Failed auto-posting' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed auto-posting', details: err.message }, { status: 500 });
   }
 }
