@@ -263,10 +263,21 @@ function SongsView() {
             <div className="space-y-4">
               <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Title</label><input type="text" value={title} onChange={(e)=>setTitle(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--color-primary)]" placeholder="Song Title" /></div>
               <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Artist</label><input type="text" value={artist} onChange={(e)=>setArtist(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--color-primary)]" placeholder="Artist Name" /></div>
-              <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Audio URL (mp3 link)</label><input type="text" value={audioUrl} onChange={(e)=>setAudioUrl(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--color-primary)]" placeholder="https://..." /></div>
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Audio URL (mp3 link)</label>
+                <input type="text" value={audioUrl} onChange={(e)=>setAudioUrl(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--color-primary)]" placeholder="https://..." />
+                <p className="text-[10px] text-zinc-400 mt-1">
+                  <strong>Archive.org Tip:</strong> Right-click the "VBR MP3" or "MP3" link on Archive.org and select "Copy Link Address".
+                </p>
+              </div>
               <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Description (Optional)</label><textarea value={description} onChange={(e)=>setDescription(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--color-primary)]" rows={3} placeholder="Song description, lyrics, etc..." /></div>
               <div>
-                <label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Cover Art URL (Optional if uploading)</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-bold uppercase tracking-widest text-zinc-500">Cover Art URL</label>
+                  <button onClick={() => {setActiveTab('media'); setAdding(false);}} className="text-[10px] font-black text-black underline flex items-center gap-1 hover:text-[var(--color-primary)]">
+                    <ImageIcon className="w-3 h-3" /> Select from Library
+                  </button>
+                </div>
                 <input type="text" value={coverImageUrl} onChange={(e)=>setCoverImageUrl(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--color-primary)] mb-2" placeholder="https://..." />
                 
                 <label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">OR Upload Cover Image</label>
@@ -661,7 +672,12 @@ function NewsView() {
               <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Headline</label><input type="text" value={headline} onChange={(e)=>setHeadline(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--color-primary)]" placeholder="Breaking News..." /></div>
               <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Content</label><textarea value={content} onChange={(e)=>setContent(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--color-primary)]" rows={6} placeholder="Write news article here..."></textarea></div>
               <div>
-                <label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Featured Image URL (Optional if uploading)</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-bold uppercase tracking-widest text-zinc-500">Featured Image URL</label>
+                  <button onClick={() => {setActiveTab('media'); setAdding(false);}} className="text-[10px] font-black text-black underline flex items-center gap-1 hover:text-[var(--color-primary)]">
+                    <ImageIcon className="w-3 h-3" /> Select from Library
+                  </button>
+                </div>
                 <input type="text" value={featuredImageUrl} onChange={(e)=>setFeaturedImageUrl(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--color-primary)] mb-2" placeholder="https://..." />
 
                 <label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">OR Upload Image</label>
