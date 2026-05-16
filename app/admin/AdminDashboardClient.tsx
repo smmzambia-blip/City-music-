@@ -4,7 +4,7 @@ import { auth, db, storage } from '../../lib/firebase';
 import { handleFirestoreError, OperationType } from '../../lib/firebase-errors';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { collection, onSnapshot, getDocs, doc, setDoc, serverTimestamp, query, orderBy, deleteDoc, addDoc } from 'firebase/firestore';
-import { LayoutDashboard, Music, Users, FileText, Settings, LogOut, Plus, Palette, Trash2 } from 'lucide-react';
+import { LayoutDashboard, Music, Users, FileText, Settings, LogOut, Plus, Palette, Trash2, Image as ImageIcon, Copy, Check, ExternalLink } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useSettings } from '@/components/SettingsProvider';
 import { GoogleGenAI } from "@google/genai";
@@ -34,6 +34,7 @@ export default function AdminDashboardClient() {
     { id: 'songs', label: 'Songs', icon: <Music className="w-5 h-5" /> },
     { id: 'artists', label: 'Artists', icon: <Users className="w-5 h-5" /> },
     { id: 'news', label: 'News', icon: <FileText className="w-5 h-5" /> },
+    { id: 'media', label: 'Media Library', icon: <ImageIcon className="w-5 h-5" /> },
     { id: 'appearance', label: 'Appearance', icon: <Palette className="w-5 h-5" /> },
     { id: 'settings', label: 'Settings', icon: <Settings className="w-5 h-5" /> },
   ];
@@ -80,6 +81,7 @@ export default function AdminDashboardClient() {
          {activeTab === 'songs' && <SongsView />}
          {activeTab === 'artists' && <ArtistsView />}
          {activeTab === 'news' && <NewsView />}
+         {activeTab === 'media' && <MediaView />}
          {activeTab === 'appearance' && <AppearanceView />}
          {activeTab === 'settings' && <SettingsView />}
       </div>
@@ -232,7 +234,14 @@ function SongsView() {
       setTitle(''); setArtist(''); setAudioUrl(''); setCoverImageUrl(''); setCoverFile(null); setDescription('');
       setAdding(false);
     } catch(err: any) {
-      handleFirestoreError(err, OperationType.WRITE, `songs/${songId}`);
+      console.error('Publish Error:', err);
+      alert('Error publishing song: ' + err.message);
+      try {
+        handleFirestoreError(err, OperationType.WRITE, `songs/${songId}`);
+      } catch (innerErr) {
+        // Log the detailed error
+        console.error('Detailed error:', innerErr);
+      }
     } finally {
       setSubmitting(false);
       setPublishStep('');
@@ -397,7 +406,13 @@ function ArtistsView() {
       setName(''); setBiography(''); setPhotoUrl(''); setPhotoFile(null);
       setAdding(false);
     } catch(err: any) {
-      handleFirestoreError(err, OperationType.WRITE, `artists/${artistId}`);
+      console.error('Save Error:', err);
+      alert('Error saving artist: ' + err.message);
+      try {
+        handleFirestoreError(err, OperationType.WRITE, `artists/${artistId}`);
+      } catch (innerErr) {
+        console.error('Detailed error:', innerErr);
+      }
     } finally {
       setSubmitting(false);
       setSaveStep('');
@@ -544,7 +559,13 @@ function NewsView() {
       setHeadline(''); setContent(''); setFeaturedImageUrl(''); setFile(null);
       setAdding(false);
     } catch(err: any) {
-      handleFirestoreError(err, OperationType.WRITE, `news/${newsId}`);
+      console.error('Publish Error:', err);
+      alert('Error publishing news: ' + err.message);
+      try {
+        handleFirestoreError(err, OperationType.WRITE, `news/${newsId}`);
+      } catch (innerErr) {
+        console.error('Detailed error:', innerErr);
+      }
     } finally {
       setSubmitting(false);
       setPublishStep('');
@@ -796,6 +817,160 @@ function SettingsView() {
               {submitting ? 'Saving...' : 'Save Changes'}
             </button>
           </div>
+       </div>
+    </div>
+  );
+}
+
+function MediaView() {
+  const [file, setFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [mediaList, setMediaList] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const path = 'media';
+    const q = query(collection(db, path), orderBy('createdAt', 'desc'));
+    const unsub = onSnapshot(q, (snap) => {
+      setMediaList(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      setLoading(false);
+    }, (err) => handleFirestoreError(err, OperationType.LIST, path));
+    return () => unsub();
+  }, []);
+
+  const handleUpload = async () => {
+    if (!file) return alert('Select a file first');
+    if (!auth.currentUser) return alert('Not authenticated');
+
+    setUploading(true);
+    setProgress(0);
+    
+    const mediaId = `media-${Date.now()}`;
+    const fileRef = ref(storage, `media/${mediaId}-${file.name}`);
+    const uploadTask = uploadBytesResumable(fileRef, file);
+
+    try {
+      await new Promise((resolve, reject) => {
+        uploadTask.on('state_changed', 
+          (snapshot) => {
+            const p = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            setProgress(p);
+          }, 
+          (error) => reject(error), 
+          () => resolve(null)
+        );
+      });
+
+      const url = await getDownloadURL(uploadTask.snapshot.ref);
+      
+      await setDoc(doc(db, 'media', mediaId), {
+        name: file.name,
+        url,
+        type: file.type,
+        userId: auth.currentUser.uid,
+        createdAt: serverTimestamp()
+      });
+
+      setFile(null);
+      alert('File uploaded to vault!');
+    } catch (err: any) {
+      alert('Upload failed: ' + err.message);
+    } finally {
+      setUploading(false);
+      setProgress(0);
+    }
+  };
+
+  const copyToClipboard = (url: string, id: string) => {
+    navigator.clipboard.writeText(url);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Delete this from the vault?')) return;
+    try {
+      await deleteDoc(doc(db, 'media', id));
+    } catch (err: any) {
+      alert('Delete failed: ' + err.message);
+    }
+  };
+
+  return (
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+       <div className="border-b border-zinc-100 pb-4">
+         <h2 className="text-2xl font-black italic tracking-tighter uppercase">Media Vault</h2>
+         <p className="text-zinc-500 text-sm font-medium mt-1">Upload images/media here to get URLs for your posts.</p>
+       </div>
+
+       <div className="bg-zinc-50 border border-zinc-200 p-6 rounded-2xl">
+          <h3 className="font-black uppercase tracking-widest text-sm mb-4">Upload New Media</h3>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <input 
+              type="file" 
+              onChange={(e) => setFile(e.target.files?.[0] || null)}
+              className="flex-1 bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--color-primary)]" 
+            />
+            <button 
+              onClick={handleUpload} 
+              disabled={uploading || !file} 
+              className="bg-black text-[var(--color-primary)] px-8 py-3 rounded-full font-black uppercase tracking-widest text-xs hover:opacity-80 transition disabled:opacity-50"
+            >
+              {uploading ? `Uploading ${Math.round(progress)}%` : 'Upload'}
+            </button>
+          </div>
+       </div>
+
+       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {loading ? (
+            <p className="text-zinc-400 font-bold uppercase tracking-widest text-xs">Loading vault...</p>
+          ) : mediaList.length > 0 ? (
+            mediaList.map((item) => (
+              <div key={item.id} className="bg-white border border-zinc-200 rounded-2xl overflow-hidden group shadow-sm hover:shadow-md transition-shadow">
+                <div className="aspect-video bg-zinc-100 relative">
+                  {item.type?.startsWith('image/') ? (
+                    <img src={item.url} alt={item.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                       <ImageIcon className="w-8 h-8 text-zinc-300" />
+                    </div>
+                  )}
+                  <button 
+                    onClick={() => handleDelete(item.id)}
+                    className="absolute top-2 right-2 p-1.5 bg-white/90 rounded-full text-zinc-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+                <div className="p-4 space-y-3">
+                   <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 truncate">{item.name}</p>
+                   <div className="flex gap-2">
+                     <button 
+                       onClick={() => copyToClipboard(item.url, item.id)}
+                       className="flex-1 flex items-center justify-center gap-2 bg-zinc-900 text-white py-2 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-[var(--color-primary)] hover:text-black transition-colors"
+                     >
+                       {copiedId === item.id ? <><Check className="w-3 h-3" /> Copied</> : <><Copy className="w-3 h-3" /> Copy Link</>}
+                     </button>
+                     <a 
+                       href={item.url} 
+                       target="_blank" 
+                       rel="noopener noreferrer" 
+                       className="p-2 bg-zinc-100 rounded-lg text-zinc-400 hover:text-black transition-colors"
+                     >
+                       <ExternalLink className="w-4 h-4" />
+                     </a>
+                   </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="col-span-full py-20 text-center bg-zinc-50 rounded-2xl border border-dashed border-zinc-200">
+               <ImageIcon className="w-12 h-12 mx-auto text-zinc-200 mb-4" />
+               <p className="text-zinc-400 font-bold uppercase tracking-widest text-xs">Your vault is empty.</p>
+            </div>
+          )}
        </div>
     </div>
   );

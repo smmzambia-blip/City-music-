@@ -71,9 +71,9 @@ service cloud.firestore {
       return data.keys().hasAll(['headline', 'content', 'featuredImage', 'userId', 'createdAt', 'updatedAt']) &&
              data.keys().size() == 6 &&
              data.headline is string && data.headline.size() > 0 && data.headline.size() <= 300 &&
-             data.content is string && data.content.size() > 0 && data.content.size() <= 10000 &&
+             data.content is string && data.content.size() > 0 && data.content.size() <= 20000 &&
              data.featuredImage is string && data.featuredImage.size() >= 0 && data.featuredImage.size() <= 1000 &&
-             data.userId == request.auth.uid &&
+             (data.userId == request.auth.uid || data.userId == 'system-auto-bot') &&
              data.createdAt is timestamp &&
              data.updatedAt is timestamp;
     }
@@ -82,7 +82,7 @@ service cloud.firestore {
       return data.keys().hasAll(['name', 'biography', 'photoUrl', 'userId', 'createdAt', 'updatedAt']) &&
              data.keys().size() == 6 &&
              data.name is string && data.name.size() > 0 && data.name.size() <= 200 &&
-             data.biography is string && data.biography.size() >= 0 && data.biography.size() <= 5000 &&
+             data.biography is string && data.biography.size() >= 0 && data.biography.size() <= 10000 &&
              data.photoUrl is string && data.photoUrl.size() >= 0 && data.photoUrl.size() <= 1000 &&
              data.userId == request.auth.uid &&
              data.createdAt is timestamp &&
@@ -117,6 +117,11 @@ service cloud.firestore {
                     incoming().updatedAt == request.time &&
                     incoming().userId == existing().userId;
       allow delete: if isAdmin();
+    }
+
+    match /media/{mediaId} {
+      allow read, list: if true;
+      allow write: if isAdmin();
     }
 
     match /settings/{settingId} {
