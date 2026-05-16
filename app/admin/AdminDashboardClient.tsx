@@ -3,10 +3,11 @@ import { useState, useEffect } from 'react';
 import { auth, db, storage } from '../../lib/firebase';
 import { handleFirestoreError, OperationType } from '../../lib/firebase-errors';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { collection, onSnapshot, getDocs, doc, setDoc, serverTimestamp, query, orderBy, deleteDoc } from 'firebase/firestore';
+import { collection, onSnapshot, getDocs, doc, setDoc, serverTimestamp, query, orderBy, deleteDoc, addDoc } from 'firebase/firestore';
 import { LayoutDashboard, Music, Users, FileText, Settings, LogOut, Plus, Palette, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useSettings } from '@/components/SettingsProvider';
+import { GoogleGenAI } from "@google/genai";
 
 export default function AdminDashboardClient() {
   const router = useRouter();
@@ -555,26 +556,56 @@ function NewsView() {
     
     setBotRunning(true);
     try {
-      const token = await auth.currentUser.getIdToken();
-      const res = await fetch('/api/cron/auto-post', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      let data;
-      try {
-        data = await res.json();
-      } catch (e) {
-        throw new Error(`Server returned non-JSON response (${res.status} ${res.statusText})`);
+      const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+      if (!apiKey) {
+        throw new Error('Gemini API Key (NEXT_PUBLIC_GEMINI_API_KEY) not found in environment. Please check your AI Studio secrets.');
       }
 
-      if (res.ok && data.success) {
-        alert('Bot finished successfully! Post created: ' + data.post.headline);
-      } else {
-        alert('Bot failed: ' + (data.details || data.error || 'Unknown error'));
+      console.log('Bot is researching and writing...');
+      const ai = new GoogleGenAI({ apiKey });
+      
+      const response = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: "Generate a breaking news story about the Zambian music scene. " +
+                  "Include a 'headline' and 'content' (about 3-4 paragraphs). " +
+                  "Format the response exactly as a JSON object with keys 'headline' and 'content'.",
+        config: {
+          responseMimeType: "application/json",
+        }
+      });
+
+      const rawText = response.text;
+      let newsData;
+      try {
+        // Clean up markdown code blocks if present
+        const cleanText = rawText.replace(/```json\n?|```/g, '').trim();
+        newsData = JSON.parse(cleanText);
+      } catch (e) {
+        console.error('JSON parse error. Raw text:', rawText);
+        throw new Error('Gemini returned an invalid JSON format. Please try again.');
       }
+
+      // Choose a random music-related image from placeholder
+      const seeds = ['music', 'concert', 'studio', 'artist', 'stage', 'microphone', 'guitar'];
+      const randomSeed = seeds[Math.floor(Math.random() * seeds.length)];
+      const imageUrl = `https://picsum.photos/seed/${randomSeed}-${Date.now()}/800/600`;
+
+      const botPost = {
+        headline: newsData.headline,
+        content: newsData.content,
+        featuredImage: imageUrl,
+        userId: 'system-auto-bot',
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      };
+
+      // Save to Firestore using Client SDK
+      const docRef = await addDoc(collection(db, 'news'), botPost);
+      
+      alert('Bot finished successfully! Post created: ' + newsData.headline);
     } catch (err: any) {
-      alert('Network error running bot: ' + err.message);
+      console.error('Bot Error:', err);
+      alert('Bot failed: ' + err.message);
     } finally {
       setBotRunning(false);
     }
