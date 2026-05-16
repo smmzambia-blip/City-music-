@@ -1,9 +1,12 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { initializeFirestore } from 'firebase/firestore';
+import { initializeFirestore, setLogLevel, memoryLocalCache } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
 import appletConfig from '../firebase-applet-config.json';
+
+// Enable debug logging
+setLogLevel('debug');
 
 const isCustomFirebase = !!process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
@@ -18,24 +21,23 @@ const firebaseConfig = isCustomFirebase ? {
 
 const app = !getApps().length ? initializeApp(firebaseConfig as any) : getApp();
 
-export const db = isCustomFirebase 
-  ? initializeFirestore(app, { experimentalForceLongPolling: true }) 
-  : initializeFirestore(app, { experimentalForceLongPolling: true }, (appletConfig as any).firestoreDatabaseId);
+const databaseId = isCustomFirebase 
+  ? (process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID || '(default)')
+  : (appletConfig as any).firestoreDatabaseId;
+
+// Configure Firestore with maximum stability settings for AI Studio environment
+export const db = databaseId && databaseId !== '(default)'
+  ? initializeFirestore(app, { 
+      experimentalForceLongPolling: true,
+      useFetchStreams: false,
+      localCache: memoryLocalCache()
+    } as any, databaseId)
+  : initializeFirestore(app, { 
+      experimentalForceLongPolling: true,
+      useFetchStreams: false,
+      localCache: memoryLocalCache()
+    } as any);
 
 export const auth = getAuth(app);
 export const storage = getStorage(app);
 
-// Validate connection to Firestore
-import { doc, getDocFromServer } from 'firebase/firestore';
-
-async function testConnection() {
-  try {
-    // Attempting to reach the server directly to bypass any cache/offline issues
-    await getDocFromServer(doc(db, 'test', 'connection'));
-  } catch (error: any) {
-    if (error.message && (error.message.includes('the client is offline') || error.message.includes('Could not reach Cloud Firestore backend'))) {
-      console.error("Please check your Firebase configuration or network. Firestore could not be reached.");
-    }
-  }
-}
-testConnection();
