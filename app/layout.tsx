@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { PlayerProvider } from '@/components/PlayerProvider';
 import Navbar from '@/components/Navbar';
-import Header from '@/components/Header';
 import BottomPlayer from '@/components/BottomPlayer';
+import Footer from '@/components/Footer';
 
 export const metadata: Metadata = {
   title: {
@@ -27,18 +27,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark">
-      <body className="bg-[#0A0A0A] text-white font-sans overflow-hidden h-screen flex flex-col">
+    <html lang="en">
+      <body className="bg-white text-black font-sans min-h-screen flex flex-col relative pb-32">
         <PlayerProvider>
-          <div className="flex flex-1 overflow-hidden pb-24">
-            <Navbar />
-            <main className="flex-1 flex flex-col overflow-auto relative bg-[#0A0A0A]">
-              <Header />
-              <div className="flex-1 p-8 overflow-x-hidden">
-                {children}
-              </div>
-            </main>
-          </div>
+          <Navbar />
+          <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+            {children}
+          </main>
+          <Footer />
           <BottomPlayer />
         </PlayerProvider>
       </body>

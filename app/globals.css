@@ -1,17 +1,11 @@
 @import "tailwindcss";
 
 @theme {
-  --background: #0A0A0A;
-  --foreground: #ffffff;
-  --card: #111111;
+  --background: #ffffff;
+  --foreground: #000000;
+  --card: #f8fafc;
   --color-primary: #00FF00;
   --color-primary-foreground: #000000;
-}
-
-.dark {
-  --background: #0A0A0A;
-  --foreground: #ffffff;
-  --card: #111111;
 }
 
 body {

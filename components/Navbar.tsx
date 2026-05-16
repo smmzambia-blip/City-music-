@@ -1,60 +1,129 @@
 'use client';
 
 import Link from 'next/link';
-import { Home, Compass, TrendingUp, Users, Disc, Shield, UserCircle2 } from 'lucide-react';
+import { Search, UserCircle2, Menu, X } from 'lucide-react';
 import { usePathname } from 'next/navigation';
+import { useState } from 'react';
 
 export default function Navbar() {
   const pathname = usePathname();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const isActive = (path: string) => pathname === path;
 
+  const navLinks = [
+    { name: 'Home', href: '/' },
+    { name: 'Trending', href: '/trending' },
+    { name: 'Discover', href: '/genres' },
+    { name: 'Artists', href: '/artists' },
+  ];
+
   return (
-    <aside className="w-64 border-r border-white/10 flex flex-col bg-[#0A0A0A] h-full flex-shrink-0 hidden md:flex">
-      <div className="p-6 flex flex-col h-full">
-        <div className="flex items-center gap-2 mb-8">
-          <div className="w-8 h-8 bg-[#00FF00] rounded-sm flex items-center justify-center text-black font-black italic underline">Z</div>
-          <h1 className="text-2xl font-black tracking-tight text-[#00FF00]">ZEDTUNES</h1>
-        </div>
-        
-        <nav className="space-y-1">
-          <Link href="/" className={`flex items-center gap-3 px-3 py-2 rounded-lg font-medium transition-colors ${isActive('/') ? 'bg-white/5 text-[#00FF00]' : 'text-white/60 hover:text-white'}`}>
-            <Home className="w-5 h-5" /> Home
-          </Link>
-          <Link href="/genres" className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isActive('/genres') ? 'bg-white/5 text-[#00FF00]' : 'text-white/60 hover:text-white'}`}>
-            <Compass className="w-5 h-5" /> Discover Music
-          </Link>
-          <Link href="/trending" className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isActive('/trending') ? 'bg-white/5 text-[#00FF00]' : 'text-white/60 hover:text-white'}`}>
-            <TrendingUp className="w-5 h-5" /> Trending
-          </Link>
-          <Link href="/artists" className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isActive('/artists') ? 'bg-white/5 text-[#00FF00]' : 'text-white/60 hover:text-white'}`}>
-            <Users className="w-5 h-5" /> Artists
-          </Link>
-          <Link href="/albums" className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isActive('/albums') ? 'bg-white/5 text-[#00FF00]' : 'text-white/60 hover:text-white'}`}>
-            <Disc className="w-5 h-5" /> Albums
-          </Link>
-        </nav>
-
-        <div className="mt-8 pt-8 border-t border-white/5">
-          <p className="px-3 text-[10px] font-bold text-white/30 uppercase tracking-[2px] mb-4">Account</p>
-          <Link href="/admin" className="flex items-center gap-3 px-3 py-2 text-white/60 hover:text-white transition-colors">
-            <div className="w-5 h-5 border border-white/20 rounded flex items-center justify-center text-[10px] font-bold">A</div>
-            Admin Panel
-          </Link>
-          <Link href="/login" className="flex items-center gap-3 px-3 py-2 text-white/60 hover:text-white transition-colors">
-            <UserCircle2 className="w-5 h-5" />
-            Login
+    <nav className="bg-white border-b border-zinc-100 sticky top-0 z-50 transition-all">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Logo Section - Top Center */}
+        <div className="flex justify-center py-4 border-b border-zinc-50 md:py-6">
+          <Link href="/" className="flex items-center gap-2 group">
+            <div className="w-10 h-10 bg-black rounded-lg flex items-center justify-center text-[#00FF00] font-black italic underline transform group-hover:rotate-6 transition-transform">Z</div>
+            <span className="text-3xl font-black tracking-tighter text-black italic">ZEDTUNES</span>
           </Link>
         </div>
 
-        <div className="mt-auto">
-          <div className="bg-gradient-to-br from-[#00FF00]/20 to-transparent p-4 rounded-xl border border-[#00FF00]/10">
-            <p className="text-xs font-bold text-[#00FF00] mb-1">SEO Health: 98%</p>
-            <p className="text-[10px] text-white/40 leading-relaxed">All active songs are statically generated for Google indexing.</p>
+        <div className="flex justify-between h-14 md:h-16 items-center">
+          
+          {/* Left Side: Desktop Menu */}
+          <div className="hidden md:flex items-center space-x-10 flex-1 justify-center">
+            {navLinks.map((link) => (
+              <Link
+                key={link.name}
+                href={link.href}
+                className={`text-xs font-black uppercase tracking-[0.2em] transition-all hover:tracking-[0.3em] ${
+                  isActive(link.href) ? 'text-[#00FF00] border-b-2 border-[#00FF00]' : 'text-zinc-500 hover:text-black'
+                }`}
+              >
+                {link.name}
+              </Link>
+            ))}
+          </div>
+
+          {/* Right Side Actions for Mobile - Hamburger */}
+          <div className="flex md:hidden items-center justify-between w-full">
+             <div className="flex items-center gap-4">
+                <button 
+                  className="p-2 text-zinc-500 hover:text-black transition-colors"
+                  onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                >
+                  {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                </button>
+             </div>
+             <div className="flex items-center gap-4">
+                <Link href="/login" className="text-zinc-500 hover:text-black transition-colors">
+                  <UserCircle2 className="w-6 h-6" />
+                </Link>
+             </div>
+          </div>
+
+          {/* Right Side: Search & Profile - Desktop */}
+          <div className="hidden md:flex items-center justify-end space-x-6">
+            <div className="flex items-center relative group">
+               <Search className="w-4 h-4 absolute left-3 text-zinc-300 group-focus-within:text-[#00FF00] transition-colors" />
+               <input 
+                 type="text" 
+                 placeholder="Search library..." 
+                 className="bg-zinc-50 border-zinc-100 border rounded-full py-1.5 pl-9 pr-4 text-[10px] uppercase font-bold tracking-widest w-48 focus:w-64 transition-all outline-none focus:ring-1 focus:ring-[#00FF00]/30"
+               />
+            </div>
+            <Link href="/login" className="text-zinc-500 hover:text-black transition-colors flex items-center gap-2">
+              <span className="text-[10px] font-black uppercase tracking-widest hidden lg:block">Account</span>
+              <UserCircle2 className="w-6 h-6" />
+            </Link>
           </div>
         </div>
       </div>
-    </aside>
+
+      {/* Mobile Menu Overlay */}
+      {isMobileMenuOpen && (
+        <div className="md:hidden fixed inset-0 z-40 bg-white pt-32 px-6 animate-in slide-in-from-top duration-300">
+           <button 
+             className="absolute top-8 left-6 p-2 text-zinc-800"
+             onClick={() => setIsMobileMenuOpen(false)}
+           >
+             <X className="w-8 h-8" />
+           </button>
+           
+           <div className="space-y-6 flex flex-col items-center">
+             {navLinks.map((link) => (
+               <Link
+                 key={link.name}
+                 href={link.href}
+                 onClick={() => setIsMobileMenuOpen(false)}
+                 className={`text-2xl font-black uppercase tracking-[0.2em] ${
+                   isActive(link.href) ? 'text-[#00FF00]' : 'text-zinc-800'
+                 }`}
+               >
+                 {link.name}
+               </Link>
+             ))}
+             <div className="pt-8 w-full border-t border-zinc-100 flex flex-col items-center gap-6">
+                <Link
+                  href="/admin"
+                  className="text-sm font-bold uppercase tracking-widest text-zinc-400"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Admin Panel
+                </Link>
+                <Link
+                  href="/login"
+                  className="bg-black text-[#00FF00] px-12 py-4 rounded-full font-black uppercase tracking-widest shadow-xl"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Sign In
+                </Link>
+             </div>
+           </div>
+        </div>
+      )}
+    </nav>
   );
 }
 
