@@ -54,29 +54,29 @@ export default function TrendingPage() {
                 className="flex items-center gap-4 bg-zinc-50 p-4 rounded-3xl hover:bg-white hover:shadow-xl transition-all group border border-transparent hover:border-zinc-100"
               >
                 <div className="w-12 text-center">
-                  <span className="text-3xl font-black text-zinc-200 italic group-hover:text-[#00FF00] transition-colors">{i + 1}</span>
+                  <span className="text-3xl font-black text-zinc-200 italic group-hover:text-[var(--color-primary)] transition-colors">{i + 1}</span>
                 </div>
                 
                 <div className="w-16 h-16 rounded-xl bg-zinc-200 overflow-hidden shrink-0 shadow-sm relative">
                   <img src={song.coverImage} alt={song.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[1px]">
-                    <div className="w-8 h-8 bg-[#00FF00] rounded-full flex items-center justify-center text-black shadow-lg scale-75 group-hover:scale-100 transition-all duration-300">
+                    <div className="w-8 h-8 bg-[var(--color-primary)] rounded-full flex items-center justify-center text-black shadow-lg scale-75 group-hover:scale-100 transition-all duration-300">
                       <Play className="w-4 h-4 fill-current ml-0.5" />
                     </div>
                   </div>
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-extrabold text-lg text-black truncate group-hover:text-[#00FF00] transition-colors">{song.title}</h3>
+                  <h3 className="font-extrabold text-lg text-black truncate group-hover:text-[var(--color-primary)] transition-colors">{song.title}</h3>
                   <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest truncate">{song.artist}</p>
                 </div>
                 
                 <div className="text-right hidden sm:block pr-4">
                   <div className="text-xs font-bold text-zinc-400 uppercase tracking-widest flex items-center justify-end gap-1.5 mb-1"><Play className="w-3 h-3 text-zinc-300" /> {song.plays || 0}</div>
-                  <span className="text-[10px] font-black text-[#00FF00] bg-[#00FF00]/10 px-2 py-0.5 rounded italic whitespace-nowrap">Trending +{Math.max(1, 20 - i*2)}%</span>
+                  <span className="text-[10px] font-black text-[var(--color-primary)] bg-[var(--color-primary)]/10 px-2 py-0.5 rounded italic whitespace-nowrap">Trending +{Math.max(1, 20 - i*2)}%</span>
                 </div>
                 
-                <div className="w-12 h-12 rounded-full border-2 border-zinc-100 flex items-center justify-center text-zinc-300 group-hover:bg-black group-hover:border-black group-hover:text-[#00FF00] transition-all shrink-0">
+                <div className="w-12 h-12 rounded-full border-2 border-zinc-100 flex items-center justify-center text-zinc-300 group-hover:bg-black group-hover:border-black group-hover:text-[var(--color-primary)] transition-all shrink-0">
                   <Play className="w-5 h-5 fill-current ml-1" />
                 </div>
               </Link>

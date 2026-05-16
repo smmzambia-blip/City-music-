@@ -33,7 +33,7 @@ export default function BottomPlayer() {
           <p className="text-sm font-black truncate text-black">{currentSong.title}</p>
           <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider truncate">{currentSong.artist}</p>
         </div>
-        <button className="text-zinc-300 hover:text-[#00FF00] ml-2 transition-colors">
+        <button className="text-zinc-300 hover:text-[var(--color-primary)] ml-2 transition-colors">
           <Plus className="w-5 h-5" />
         </button>
       </div>
@@ -44,7 +44,7 @@ export default function BottomPlayer() {
           <button className="text-zinc-300 hover:text-black transition-colors"><SkipBack className="w-5 h-5 fill-current" /></button>
           <button 
             onClick={togglePlay}
-            className="w-12 h-12 bg-black rounded-full flex items-center justify-center text-[#00FF00] hover:scale-110 transition-transform shadow-lg active:scale-95"
+            className="w-12 h-12 bg-black rounded-full flex items-center justify-center text-[var(--color-primary)] hover:scale-110 transition-transform shadow-lg active:scale-95"
           >
             {isPlaying ? <Pause className="w-5 h-5 fill-current" /> : <Play className="w-6 h-6 fill-current ml-1" />}
           </button>
@@ -53,7 +53,7 @@ export default function BottomPlayer() {
         <div className="flex items-center gap-4 w-full">
           <span className="text-[10px] font-bold text-zinc-300 w-10 text-right">0:00</span>
           <div className="flex-1 h-1.5 bg-zinc-100 rounded-full overflow-hidden relative cursor-pointer">
-             <div className="absolute top-0 left-0 h-full bg-[#00FF00] w-1/3 rounded-full shadow-[0_0_8px_rgba(0,255,0,0.5)]"></div>
+             <div className="absolute top-0 left-0 h-full bg-[var(--color-primary)] w-1/3 rounded-full shadow-[0_0_8px_rgba(0,255,0,0.5)]"></div>
           </div>
           <span className="text-[10px] font-bold text-zinc-300 w-10">3:45</span>
         </div>
@@ -67,7 +67,7 @@ export default function BottomPlayer() {
                <div className="h-full bg-black w-2/3"></div>
           </div>
         </div>
-        <button className="bg-black text-[#00FF00] px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-zinc-800 transition-colors shadow-sm flex items-center gap-2">
+        <button className="bg-black text-[var(--color-primary)] px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-zinc-800 transition-colors shadow-sm flex items-center gap-2">
           <Download className="w-3 h-3" />
           Get MP3
         </button>

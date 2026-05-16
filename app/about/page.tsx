@@ -5,7 +5,7 @@ export default function AboutPage() {
     <div className="max-w-4xl mx-auto py-16 px-4 sm:px-6">
       <div className="mb-16 border-b border-zinc-100 pb-8 text-center sm:text-left">
         <h1 className="text-5xl md:text-7xl font-black italic tracking-tighter uppercase mb-4 text-black">
-          About <span className="text-[#00FF00] bg-black px-4 leading-normal inline-block transform -skew-y-2 mt-2 sm:mt-0">ZedTunes</span>
+          About <span className="text-[var(--color-primary)] bg-black px-4 leading-normal inline-block transform -skew-y-2 mt-2 sm:mt-0">ZedTunes</span>
         </h1>
         <p className="text-xl text-zinc-500 font-bold uppercase tracking-widest mt-6">
           Zambia's Pure Music Experience
@@ -29,7 +29,7 @@ export default function AboutPage() {
           We support the culture. ZedTunes gives artists a clean, professional space to showcase their latest hits. From emerging talents in the underground to established industry giants, this platform is engineered to amplify your reach. 
         </p>
         
-        <div className="bg-zinc-50 border-l-4 border-[#00FF00] p-6 rounded-r-2xl mt-8">
+        <div className="bg-zinc-50 border-l-4 border-[var(--color-primary)] p-6 rounded-r-2xl mt-8">
           <p className="text-black font-black italic tracking-tight m-0 text-xl">
             "Built for the culture, engineered for speed."
           </p>

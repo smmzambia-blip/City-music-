@@ -38,7 +38,7 @@ export default async function NewsPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {newsPosts.map((post) => (
-            <div key={post.id} className="group bg-white border border-zinc-100 rounded-[2rem] overflow-hidden hover:border-[#00FF00]/50 transition-all shadow-sm hover:shadow-xl flex flex-col">
+            <div key={post.id} className="group bg-white border border-zinc-100 rounded-[2rem] overflow-hidden hover:border-[var(--color-primary)]/50 transition-all shadow-sm hover:shadow-xl flex flex-col">
               {post.featuredImage && (
                 <div className="relative h-48 w-full bg-zinc-100 overflow-hidden">
                   <Image 
@@ -52,10 +52,10 @@ export default async function NewsPage() {
               )}
               <div className="p-6 flex-1 flex flex-col justify-between">
                 <div>
-                  <div className="text-[10px] font-black uppercase tracking-widest text-[#00FF00] mb-3">
+                  <div className="text-[10px] font-black uppercase tracking-widest text-[var(--color-primary)] mb-3">
                     {post.createdAt?.toDate ? post.createdAt.toDate().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recent'}
                   </div>
-                  <h2 className="text-xl font-bold mb-3 leading-tight group-hover:text-[#00FF00] transition-colors line-clamp-2">
+                  <h2 className="text-xl font-bold mb-3 leading-tight group-hover:text-[var(--color-primary)] transition-colors line-clamp-2">
                     {post.headline}
                   </h2>
                   <p className="text-zinc-500 text-sm line-clamp-3 mb-4 leading-relaxed">
@@ -64,7 +64,7 @@ export default async function NewsPage() {
                 </div>
                 <div className="pt-4 border-t border-zinc-50 flex justify-between items-center mt-auto">
                     <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">Read More</span>
-                    <div className="w-8 h-8 rounded-full bg-zinc-50 flex items-center justify-center group-hover:bg-[#00FF00] group-hover:text-black transition-colors">
+                    <div className="w-8 h-8 rounded-full bg-zinc-50 flex items-center justify-center group-hover:bg-[var(--color-primary)] group-hover:text-black transition-colors">
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
                     </div>
                 </div>

@@ -37,7 +37,7 @@ export default function DMCAPage() {
           <p>
             Please submit your DMCA notices directly to our copyright agent via email:
           </p>
-          <div className="mt-4 inline-block font-black uppercase tracking-widest text-sm bg-black text-[#00FF00] px-6 py-4 rounded-xl shadow-lg">
+          <div className="mt-4 inline-block font-black uppercase tracking-widest text-sm bg-black text-[var(--color-primary)] px-6 py-4 rounded-xl shadow-lg">
             zedtuneza@gmail.com
           </div>
           <p className="mt-6 text-sm text-zinc-400 font-bold uppercase tracking-widest">

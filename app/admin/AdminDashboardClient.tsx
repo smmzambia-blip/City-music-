@@ -5,6 +5,7 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { collection, getDocs, doc, setDoc, serverTimestamp, query, orderBy, limit } from 'firebase/firestore';
 import { LayoutDashboard, Music, Users, FileText, Settings, LogOut, Plus, Type, Palette, Upload } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useSettings } from '@/components/SettingsProvider';
 
 export default function AdminDashboardClient() {
   const router = useRouter();
@@ -39,7 +40,7 @@ export default function AdminDashboardClient() {
       {/* Sidebar */}
       <div className="w-full md:w-64 bg-zinc-900 text-white flex flex-col shrink-0">
         <div className="p-6 border-b border-zinc-800">
-           <h2 className="text-xl font-black italic tracking-tighter uppercase text-[#00FF00]">ZedTunes Admin</h2>
+           <h2 className="text-xl font-black italic tracking-tighter uppercase text-[var(--color-primary)]">ZedTunes Admin</h2>
            <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest mt-1">Control Panel</p>
         </div>
         
@@ -49,7 +50,7 @@ export default function AdminDashboardClient() {
                key={tab.id}
                onClick={() => setActiveTab(tab.id)}
                className={`w-full flex items-center gap-3 px-6 py-3 font-bold uppercase tracking-widest text-xs transition-colors ${
-                 activeTab === tab.id ? 'bg-[#00FF00] text-black border-r-4 border-white' : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
+                 activeTab === tab.id ? 'bg-[var(--color-primary)] text-black border-r-4 border-white' : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
                }`}
              >
                {tab.icon}
@@ -137,7 +138,7 @@ function DashboardView() {
       <div className="border border-zinc-100 rounded-2xl p-6 bg-zinc-50/50">
         <h3 className="font-black uppercase tracking-widest text-sm mb-4">Quick Actions</h3>
         <div className="flex flex-wrap gap-4">
-          <button className="bg-black text-white px-4 py-2 rounded-full font-bold uppercase tracking-widest text-[10px] hover:bg-[#00FF00] hover:text-black transition">Add New Song</button>
+          <button className="bg-black text-white px-4 py-2 rounded-full font-bold uppercase tracking-widest text-[10px] hover:bg-[var(--color-primary)] hover:text-black transition">Add New Song</button>
           <button className="bg-zinc-200 text-black px-4 py-2 rounded-full font-bold uppercase tracking-widest text-[10px] hover:bg-zinc-300 transition">Write News</button>
           <button className="bg-zinc-200 text-black px-4 py-2 rounded-full font-bold uppercase tracking-widest text-[10px] hover:bg-zinc-300 transition">Manage Appearance</button>
         </div>
@@ -199,7 +200,7 @@ function SongsView() {
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
        <div className="flex justify-between items-center border-b border-zinc-100 pb-4">
          <h2 className="text-2xl font-black italic tracking-tighter uppercase">Manage Songs</h2>
-         <button onClick={() => setAdding(!adding)} className="flex items-center gap-2 bg-[#00FF00] text-black px-4 py-2 rounded-full font-black uppercase tracking-widest text-xs hover:bg-black hover:text-[#00FF00] transition">
+         <button onClick={() => setAdding(!adding)} className="flex items-center gap-2 bg-[var(--color-primary)] text-black px-4 py-2 rounded-full font-black uppercase tracking-widest text-xs hover:bg-black hover:text-[var(--color-primary)] transition">
            {adding ? 'Cancel' : <><Plus className="w-4 h-4"/> Add New</>}
          </button>
        </div>
@@ -208,17 +209,17 @@ function SongsView() {
          <div className="bg-zinc-50 border border-zinc-200 p-6 rounded-2xl">
            <h3 className="font-black uppercase tracking-widest text-sm mb-4">Post a new song</h3>
            <div className="space-y-4">
-             <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Title</label><input type="text" value={title} onChange={(e)=>setTitle(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00FF00]" placeholder="Song Title" /></div>
-             <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Artist</label><input type="text" value={artist} onChange={(e)=>setArtist(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00FF00]" placeholder="Artist Name" /></div>
-             <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Audio URL (Google Drive/S3/Direct)</label><input type="text" value={audioUrl} onChange={(e)=>setAudioUrl(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00FF00]" placeholder="https://..." /></div>
-             <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Description (Optional)</label><textarea value={description} onChange={(e)=>setDescription(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00FF00]" rows={3} placeholder="Song description, lyrics, etc..." /></div>
+             <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Title</label><input type="text" value={title} onChange={(e)=>setTitle(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--color-primary)]" placeholder="Song Title" /></div>
+             <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Artist</label><input type="text" value={artist} onChange={(e)=>setArtist(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--color-primary)]" placeholder="Artist Name" /></div>
+             <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Audio URL (Google Drive/S3/Direct)</label><input type="text" value={audioUrl} onChange={(e)=>setAudioUrl(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--color-primary)]" placeholder="https://..." /></div>
+             <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Description (Optional)</label><textarea value={description} onChange={(e)=>setDescription(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--color-primary)]" rows={3} placeholder="Song description, lyrics, etc..." /></div>
              <div>
                <label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Cover Art Image</label>
                <input 
                  type="file" 
                  accept="image/*"
                  onChange={(e) => setCoverFile(e.target.files?.[0] || null)} 
-                 className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00FF00]" 
+                 className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--color-primary)]" 
                />
                {coverFile && <img src={URL.createObjectURL(coverFile)} alt="Cover Preview" className="mt-4 w-32 h-32 object-cover rounded-xl shadow-md border border-zinc-200" />}
              </div>
@@ -229,14 +230,14 @@ function SongsView() {
                  id="google-index-song" 
                  checked={instantIndex}
                  onChange={(e) => setInstantIndex(e.target.checked)}
-                 className="w-5 h-5 accent-[#00FF00] cursor-pointer" 
+                 className="w-5 h-5 accent-[var(--color-primary)] cursor-pointer" 
                />
                <label htmlFor="google-index-song" className="text-xs font-black uppercase tracking-widest text-black cursor-pointer">
                  Trigger Instant Google Indexing
                </label>
              </div>
 
-             <button onClick={handlePublish} disabled={submitting} className="bg-black text-white px-6 py-3 rounded-full font-black uppercase tracking-widest text-xs hover:bg-[#00FF00] hover:text-black transition">
+             <button onClick={handlePublish} disabled={submitting} className="bg-black text-white px-6 py-3 rounded-full font-black uppercase tracking-widest text-xs hover:bg-[var(--color-primary)] hover:text-black transition">
                 {submitting ? 'Publishing...' : 'Publish Song'}
              </button>
            </div>
@@ -295,7 +296,7 @@ function ArtistsView() {
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
        <div className="flex justify-between items-center border-b border-zinc-100 pb-4">
          <h2 className="text-2xl font-black italic tracking-tighter uppercase">Manage Artists</h2>
-         <button onClick={()=>setAdding(!adding)} className="flex items-center gap-2 bg-[#00FF00] text-black px-4 py-2 rounded-full font-black uppercase tracking-widest text-xs hover:bg-black hover:text-[#00FF00] transition">
+         <button onClick={()=>setAdding(!adding)} className="flex items-center gap-2 bg-[var(--color-primary)] text-black px-4 py-2 rounded-full font-black uppercase tracking-widest text-xs hover:bg-black hover:text-[var(--color-primary)] transition">
            {adding ? 'Cancel' : <><Plus className="w-4 h-4"/> Add Artist</>}
          </button>
        </div>
@@ -304,19 +305,19 @@ function ArtistsView() {
          <div className="bg-zinc-50 border border-zinc-200 p-6 rounded-2xl">
            <h3 className="font-black uppercase tracking-widest text-sm mb-4">Create Artist Profile</h3>
            <div className="space-y-4">
-             <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Artist Name</label><input type="text" value={name} onChange={(e)=>setName(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00FF00]" placeholder="Name" /></div>
-             <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Biography</label><textarea value={biography} onChange={(e)=>setBiography(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00FF00]" rows={4} placeholder="Artist biography..."></textarea></div>
+             <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Artist Name</label><input type="text" value={name} onChange={(e)=>setName(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--color-primary)]" placeholder="Name" /></div>
+             <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Biography</label><textarea value={biography} onChange={(e)=>setBiography(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--color-primary)]" rows={4} placeholder="Artist biography..."></textarea></div>
              <div>
                <label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Photo Image</label>
                <input 
                  type="file" 
                  accept="image/*"
                  onChange={(e) => setPhotoFile(e.target.files?.[0] || null)} 
-                 className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00FF00]" 
+                 className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--color-primary)]" 
                />
                {photoFile && <img src={URL.createObjectURL(photoFile)} alt="Artist Preview" className="mt-4 w-32 h-32 object-cover rounded-xl shadow-md border border-zinc-200" />}
              </div>
-             <button onClick={handleSave} disabled={submitting} className="bg-black text-white px-6 py-3 rounded-full font-black uppercase tracking-widest text-xs hover:bg-[#00FF00] hover:text-black transition">
+             <button onClick={handleSave} disabled={submitting} className="bg-black text-white px-6 py-3 rounded-full font-black uppercase tracking-widest text-xs hover:bg-[var(--color-primary)] hover:text-black transition">
                 {submitting ? 'Saving...' : 'Save Artist'}
              </button>
            </div>
@@ -378,7 +379,7 @@ function NewsView() {
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
        <div className="flex justify-between items-center border-b border-zinc-100 pb-4">
          <h2 className="text-2xl font-black italic tracking-tighter uppercase">News & Blog</h2>
-         <button onClick={()=>setAdding(!adding)} className="flex items-center gap-2 bg-[#00FF00] text-black px-4 py-2 rounded-full font-black uppercase tracking-widest text-xs hover:bg-black hover:text-[#00FF00] transition">
+         <button onClick={()=>setAdding(!adding)} className="flex items-center gap-2 bg-[var(--color-primary)] text-black px-4 py-2 rounded-full font-black uppercase tracking-widest text-xs hover:bg-black hover:text-[var(--color-primary)] transition">
            {adding ? 'Cancel' : <><Plus className="w-4 h-4"/> Publish News</>}
          </button>
        </div>
@@ -387,15 +388,15 @@ function NewsView() {
          <div className="bg-zinc-50 border border-zinc-200 p-6 rounded-2xl">
            <h3 className="font-black uppercase tracking-widest text-sm mb-4">Write an Article</h3>
            <div className="space-y-4">
-             <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Headline</label><input type="text" value={headline} onChange={(e)=>setHeadline(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00FF00]" placeholder="Breaking News..." /></div>
-             <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Content</label><textarea value={content} onChange={(e)=>setContent(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00FF00]" rows={6} placeholder="Write news article here..."></textarea></div>
+             <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Headline</label><input type="text" value={headline} onChange={(e)=>setHeadline(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--color-primary)]" placeholder="Breaking News..." /></div>
+             <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Content</label><textarea value={content} onChange={(e)=>setContent(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--color-primary)]" rows={6} placeholder="Write news article here..."></textarea></div>
              <div>
                <label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Featured Image</label>
                <input 
                  type="file" 
                  accept="image/*"
                  onChange={(e) => setFile(e.target.files?.[0] || null)} 
-                 className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00FF00]" 
+                 className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--color-primary)]" 
                />
                {file && <img src={URL.createObjectURL(file)} alt="News Preview" className="mt-4 w-32 h-32 object-cover rounded-xl shadow-md border border-zinc-200" />}
              </div>
@@ -406,14 +407,14 @@ function NewsView() {
                  id="google-index-news" 
                  checked={instantIndex}
                  onChange={(e) => setInstantIndex(e.target.checked)}
-                 className="w-5 h-5 accent-[#00FF00] cursor-pointer" 
+                 className="w-5 h-5 accent-[var(--color-primary)] cursor-pointer" 
                />
                <label htmlFor="google-index-news" className="text-xs font-black uppercase tracking-widest text-black cursor-pointer">
                  Trigger Instant Google Indexing
                </label>
              </div>
 
-             <button onClick={handlePublish} disabled={submitting} className="bg-black text-white px-6 py-3 rounded-full font-black uppercase tracking-widest text-xs hover:bg-[#00FF00] hover:text-black transition">
+             <button onClick={handlePublish} disabled={submitting} className="bg-black text-white px-6 py-3 rounded-full font-black uppercase tracking-widest text-xs hover:bg-[var(--color-primary)] hover:text-black transition">
                 {submitting ? 'Publishing...' : 'Publish Article'}
              </button>
            </div>
@@ -429,6 +430,27 @@ function NewsView() {
 }
 
 function AppearanceView() {
+  const { primaryColor } = useSettings();
+  const [color, setColor] = useState(primaryColor);
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    setColor(primaryColor);
+  }, [primaryColor]);
+
+  const handleSave = async () => {
+    if (!auth.currentUser) return alert('Not authenticated');
+    setSubmitting(true);
+    try {
+      await setDoc(doc(db, 'settings', 'general'), { primaryColor: color }, { merge: true });
+      alert('Appearance Updated');
+    } catch (err: any) {
+      alert("Error: " + err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
        <div className="border-b border-zinc-100 pb-4">
@@ -443,20 +465,13 @@ function AppearanceView() {
               <div>
                 <label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Primary Accents (e.g. Neon Green)</label>
                 <div className="flex gap-2">
-                  <input type="color" defaultValue="#00FF00" className="w-10 h-10 rounded cursor-pointer" />
-                  <input type="text" className="flex-1 bg-white border border-zinc-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-[#00FF00]" defaultValue="#00FF00" />
+                  <input type="color" value={color} onChange={(e) => setColor(e.target.value)} className="w-10 h-10 rounded cursor-pointer" />
+                  <input type="text" className="flex-1 bg-white border border-zinc-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-[var(--color-primary)]" value={color} onChange={(e) => setColor(e.target.value)} />
                 </div>
               </div>
-              <button className="w-full bg-zinc-200 text-black px-4 py-3 rounded-xl font-bold uppercase tracking-widest text-xs hover:bg-zinc-300 transition">Apply Colors (Demo)</button>
-            </div>
-         </div>
-         
-         <div className="bg-zinc-50 border border-zinc-200 p-6 rounded-2xl">
-            <h3 className="font-black uppercase tracking-widest text-sm mb-4">Site Logo & Favicon</h3>
-            <div className="space-y-4">
-               <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Main Logo URL</label><input type="text" className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00FF00]" placeholder="/logo.png" /></div>
-               <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Favicon URL</label><input type="text" className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00FF00]" placeholder="/icon.svg" /></div>
-               <button className="w-full bg-zinc-200 text-black px-4 py-3 rounded-xl font-bold uppercase tracking-widest text-xs hover:bg-zinc-300 transition">Update Assets</button>
+              <button onClick={handleSave} disabled={submitting} className="w-full bg-zinc-200 text-black px-4 py-3 rounded-xl font-bold uppercase tracking-widest text-xs hover:bg-zinc-300 transition">
+                {submitting ? 'Saving...' : 'Apply Colors'}
+              </button>
             </div>
          </div>
        </div>
@@ -465,7 +480,28 @@ function AppearanceView() {
 }
 
 function SettingsView() {
-  const [autoPilotOpen, setAutoPilotOpen] = useState(false);
+  const { siteTitle, tagline } = useSettings();
+  const [title, setTitle] = useState(siteTitle);
+  const [tag, setTag] = useState(tagline);
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    setTitle(siteTitle);
+    setTag(tagline);
+  }, [siteTitle, tagline]);
+
+  const handleSave = async () => {
+    if (!auth.currentUser) return alert('Not authenticated');
+    setSubmitting(true);
+    try {
+      await setDoc(doc(db, 'settings', 'general'), { siteTitle: title, tagline: tag }, { merge: true });
+      alert('Settings Saved');
+    } catch (err: any) {
+      alert("Error: " + err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -475,52 +511,13 @@ function SettingsView() {
        
        <div className="bg-zinc-50 border border-zinc-200 p-6 rounded-2xl max-w-2xl">
           <div className="space-y-4">
-            <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Site Title</label><input type="text" defaultValue="ZedTunes" className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00FF00]" /></div>
-            <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Tagline</label><input type="text" defaultValue="Zambia's Pure Music Experience" className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00FF00]" /></div>
-            <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Admin Contact Email</label><input type="email" defaultValue="zedtuneza@gmail.com" className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00FF00]" /></div>
-            <button className="bg-black text-white px-6 py-3 rounded-full font-black uppercase tracking-widest text-xs shadow-lg hover:bg-[#00FF00] hover:text-black transition">Save Changes</button>
-          </div>
-       </div>
-
-       <div className="border-b border-zinc-100 pb-4 mt-12">
-         <h2 className="text-2xl font-black italic tracking-tighter uppercase">Auto-Pilot & Bot Settings</h2>
-         <p className="text-zinc-500 text-sm font-medium mt-1">Configure automated content generation even when you are offline.</p>
-       </div>
-
-       <div className="bg-zinc-50 border border-zinc-200 p-6 rounded-2xl max-w-2xl">
-          <div className="space-y-6">
-            <div className="flex items-center justify-between border-b border-zinc-200 pb-4">
-              <div>
-                <h3 className="font-black uppercase tracking-widest text-sm text-black">Auto-Post Sports News</h3>
-                <p className="text-xs text-zinc-500 font-medium">Cron job pulls latest sports updates daily.</p>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" className="sr-only peer" defaultChecked />
-                <div className="w-11 h-6 bg-zinc-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#00FF00]"></div>
-              </label>
-            </div>
-            
-            <div className="flex items-center justify-between border-b border-zinc-200 pb-4">
-              <div>
-                <h3 className="font-black uppercase tracking-widest text-sm text-black">Auto-Post Music Updates</h3>
-                <p className="text-xs text-zinc-500 font-medium">Cron job aggregates industry music news automatically.</p>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" className="sr-only peer" defaultChecked />
-                <div className="w-11 h-6 bg-zinc-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#00FF00]"></div>
-              </label>
-            </div>
-
-            <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-xl text-yellow-800 text-sm font-medium">
-              <strong>Note:</strong> Auto-posting bots will run in the background (using Vercel Cron API) while you are not logged in.
-            </div>
-            
-            <button className="bg-black text-[#00FF00] px-6 py-3 rounded-full font-black uppercase tracking-widest text-xs hover:opacity-80 transition flex items-center justify-center w-full">
-              Save Automation Settings
+            <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Site Title</label><input type="text" value={title} onChange={(e) => setTitle(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--color-primary)]" /></div>
+            <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Tagline</label><input type="text" value={tag} onChange={(e) => setTag(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--color-primary)]" /></div>
+            <button onClick={handleSave} disabled={submitting} className="bg-black text-white px-6 py-3 rounded-full font-black uppercase tracking-widest text-xs shadow-lg hover:bg-[var(--color-primary)] hover:text-black transition">
+              {submitting ? 'Saving...' : 'Save Changes'}
             </button>
           </div>
        </div>
-
     </div>
   );
 }

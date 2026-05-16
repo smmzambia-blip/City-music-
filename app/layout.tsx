@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { PlayerProvider } from '@/components/PlayerProvider';
+import { SettingsProvider } from '@/components/SettingsProvider';
 import Navbar from '@/components/Navbar';
 import BottomPlayer from '@/components/BottomPlayer';
 import Footer from '@/components/Footer';
@@ -29,14 +30,16 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="bg-white text-black font-sans min-h-screen flex flex-col relative pb-32">
-        <PlayerProvider>
-          <Navbar />
-          <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-            {children}
-          </main>
-          <Footer />
-          <BottomPlayer />
-        </PlayerProvider>
+        <SettingsProvider>
+          <PlayerProvider>
+            <Navbar />
+            <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+              {children}
+            </main>
+            <Footer />
+            <BottomPlayer />
+          </PlayerProvider>
+        </SettingsProvider>
       </body>
     </html>
   );

@@ -68,7 +68,7 @@ export default function WPAdminClient() {
           <Link href="/" className="flex items-center gap-2 group mx-auto">
             <div className="relative flex items-center justify-center w-16 h-16 shadow-lg rounded-full bg-white">
               <div className="absolute inset-1 bg-black rounded-full flex items-center justify-center">
-                 <svg className="w-8 h-8 text-[#00FF00]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c-1.657 0-3-1.343-3-3s1.343-3 3-3 3 1.343 3 3-1.343 3-3 3zm12-3c-1.657 0-3-1.343-3-3s1.343-3 3-3 3 1.343 3 3-1.343 3-3 3z"/></svg>
+                 <svg className="w-8 h-8 text-[var(--color-primary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c-1.657 0-3-1.343-3-3s1.343-3 3-3 3 1.343 3 3-1.343 3-3 3zm12-3c-1.657 0-3-1.343-3-3s1.343-3 3-3 3 1.343 3 3-1.343 3-3 3z"/></svg>
               </div>
             </div>
           </Link>

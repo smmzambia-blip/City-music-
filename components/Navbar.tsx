@@ -4,23 +4,28 @@ import Link from 'next/link';
 import { Search, UserCircle2, Menu, X } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
+import { useSettings } from '@/components/SettingsProvider';
 
-export const NavLogo = () => (
-  <div className="flex items-center gap-3 md:gap-4 group cursor-pointer">
-    <div className="relative flex items-center justify-center w-10 h-10 md:w-12 md:h-12">
-      <div className="absolute inset-0 bg-[#00FF00] rounded-br-[1rem] rounded-tl-[1rem] transform group-hover:rotate-180 transition-transform duration-700"></div>
-      <div className="absolute inset-1 bg-black rounded-br-lg rounded-tl-lg flex items-center justify-center">
-         <svg className="w-5 h-5 md:w-6 md:h-6 text-[#00FF00]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c-1.657 0-3-1.343-3-3s1.343-3 3-3 3 1.343 3 3-1.343 3-3 3zm12-3c-1.657 0-3-1.343-3-3s1.343-3 3-3 3 1.343 3 3-1.343 3-3 3z"/></svg>
+export const NavLogo = () => {
+  const { siteTitle, tagline } = useSettings();
+  
+  return (
+    <div className="flex items-center gap-3 md:gap-4 group cursor-pointer">
+      <div className="relative flex items-center justify-center w-10 h-10 md:w-12 md:h-12">
+        <div className="absolute inset-0 bg-[var(--color-primary)] rounded-br-[1rem] rounded-tl-[1rem] transform group-hover:rotate-180 transition-transform duration-700"></div>
+        <div className="absolute inset-1 bg-black rounded-br-lg rounded-tl-lg flex items-center justify-center">
+           <svg className="w-5 h-5 md:w-6 md:h-6 text-[var(--color-primary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c-1.657 0-3-1.343-3-3s1.343-3 3-3 3 1.343 3 3-1.343 3-3 3zm12-3c-1.657 0-3-1.343-3-3s1.343-3 3-3 3 1.343 3 3-1.343 3-3 3z"/></svg>
+        </div>
+      </div>
+      <div className="flex flex-col">
+        <span className="text-2xl md:text-3xl font-black tracking-tighter leading-none text-black">
+          {siteTitle.substring(0, 3)}<span className="text-zinc-400">{siteTitle.substring(3)}</span>
+        </span>
+        <span className="text-[8px] md:text-[9px] font-black tracking-[0.4em] text-[var(--color-primary)] uppercase pt-0.5 md:pt-1">{tagline}</span>
       </div>
     </div>
-    <div className="flex flex-col">
-      <span className="text-2xl md:text-3xl font-black tracking-tighter leading-none text-black">
-        ZED<span className="text-zinc-400">TUNES</span>
-      </span>
-      <span className="text-[8px] md:text-[9px] font-black tracking-[0.4em] text-[#00FF00] uppercase pt-0.5 md:pt-1">Zambia's Pure Music</span>
-    </div>
-  </div>
-);
+  );
+};
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -30,7 +35,6 @@ export default function Navbar() {
 
   const navLinks = [
     { name: 'Home', href: '/' },
-    { name: 'News', href: '/news' },
     { name: 'Trending', href: '/trending' },
     { name: 'Artists', href: '/artists' },
     { name: 'About', href: '/about' },
@@ -56,7 +60,7 @@ export default function Navbar() {
                 key={link.name}
                 href={link.href}
                 className={`text-xs font-black uppercase tracking-[0.2em] transition-all hover:tracking-[0.3em] py-2 ${
-                  isActive(link.href) ? 'text-[#00FF00] border-b-2 border-[#00FF00]' : 'text-zinc-500 hover:text-black border-b-2 border-transparent'
+                  isActive(link.href) ? 'text-[var(--color-primary)] border-b-2 border-[var(--color-primary)]' : 'text-zinc-500 hover:text-black border-b-2 border-transparent'
                 }`}
               >
                 {link.name}
@@ -77,11 +81,11 @@ export default function Navbar() {
           {/* Right Side: Search - Desktop */}
           <div className="hidden md:flex items-center justify-end space-x-6 flex-1 absolute right-6">
             <div className="flex items-center relative group">
-               <Search className="w-4 h-4 absolute left-3 text-zinc-300 group-focus-within:text-[#00FF00] transition-colors" />
+               <Search className="w-4 h-4 absolute left-3 text-zinc-300 group-focus-within:text-[var(--color-primary)] transition-colors" />
                <input 
                  type="text" 
                  placeholder="Search library..." 
-                 className="bg-zinc-50 border-zinc-100 border rounded-full py-1.5 pl-9 pr-4 text-[10px] uppercase font-bold tracking-widest w-48 focus:w-64 transition-all outline-none focus:ring-1 focus:ring-[#00FF00]/30"
+                 className="bg-zinc-50 border-zinc-100 border rounded-full py-1.5 pl-9 pr-4 text-[10px] uppercase font-bold tracking-widest w-48 focus:w-64 transition-all outline-none focus:ring-1 focus:ring-[var(--color-primary)]/30"
                />
             </div>
           </div>
@@ -98,7 +102,7 @@ export default function Navbar() {
                  href={link.href}
                  onClick={() => setIsMobileMenuOpen(false)}
                  className={`text-3xl font-black uppercase tracking-[0.2em] ${
-                   isActive(link.href) ? 'text-[#00FF00]' : 'text-zinc-800'
+                   isActive(link.href) ? 'text-[var(--color-primary)]' : 'text-zinc-800'
                  }`}
                >
                  {link.name}

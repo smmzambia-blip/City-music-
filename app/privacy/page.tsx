@@ -42,7 +42,7 @@ export default function PrivacyPage() {
         <section>
           <h2 className="text-xl font-black uppercase tracking-widest text-black mb-4">4. Contact Us</h2>
           <p className="text-zinc-600 font-medium leading-relaxed">
-            If you have any questions or concerns regarding this Privacy Policy, please contact us at <a href="mailto:zedtuneza@gmail.com" className="text-black font-bold border-b-2 border-[#00FF00] hover:bg-[#00FF00] transition-colors">zedtuneza@gmail.com</a>.
+            If you have any questions or concerns regarding this Privacy Policy, please contact us at <a href="mailto:zedtuneza@gmail.com" className="text-black font-bold border-b-2 border-[var(--color-primary)] hover:bg-[var(--color-primary)] transition-colors">zedtuneza@gmail.com</a>.
           </p>
         </section>
       </div>
