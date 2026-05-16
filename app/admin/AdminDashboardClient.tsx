@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
-import { auth, db } from '../../lib/firebase';
+import { auth, db, storage } from '../../lib/firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { collection, getDocs, doc, setDoc, serverTimestamp, query, orderBy, limit } from 'firebase/firestore';
 import { LayoutDashboard, Music, Users, FileText, Settings, LogOut, Plus, Type, Palette, Upload } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -152,12 +153,12 @@ function SongsView() {
   const [title, setTitle] = useState('');
   const [artist, setArtist] = useState('');
   const [audioUrl, setAudioUrl] = useState('');
-  const [coverImage, setCoverImage] = useState('');
+  const [coverFile, setCoverFile] = useState<File | null>(null);
   const [description, setDescription] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   const handlePublish = async () => {
-    if(!title || !artist || !audioUrl || !coverImage) return alert('All fields required');
+    if(!title || !artist || !audioUrl || !coverFile) return alert('All fields including cover image are required');
     if(!auth.currentUser) return alert('Not authenticated');
     
     setSubmitting(true);
@@ -165,11 +166,18 @@ function SongsView() {
       const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + Date.now();
       const songId = slug.substring(0, 128); // to be safe
       
+      let imageUrl = '';
+      if (coverFile) {
+        const fileRef = ref(storage, `song-covers/${songId}-${coverFile.name}`);
+        const snapshot = await uploadBytes(fileRef, coverFile);
+        imageUrl = await getDownloadURL(snapshot.ref);
+      }
+      
       await setDoc(doc(db, 'songs', songId), {
         title,
         artist,
         audioUrl,
-        coverImage,
+        coverImage: imageUrl,
         description: description || '',
         plays: 0,
         slug,
@@ -178,7 +186,7 @@ function SongsView() {
         updatedAt: serverTimestamp()
       });
       alert('Song Published!');
-      setTitle(''); setArtist(''); setAudioUrl(''); setCoverImage(''); setDescription('');
+      setTitle(''); setArtist(''); setAudioUrl(''); setCoverFile(null); setDescription('');
       setAdding(false);
     } catch(err: any) {
       alert("Error: " + err.message);
@@ -205,9 +213,14 @@ function SongsView() {
              <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Audio URL (Google Drive/S3/Direct)</label><input type="text" value={audioUrl} onChange={(e)=>setAudioUrl(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00FF00]" placeholder="https://..." /></div>
              <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Description (Optional)</label><textarea value={description} onChange={(e)=>setDescription(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00FF00]" rows={3} placeholder="Song description, lyrics, etc..." /></div>
              <div>
-               <label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Cover Art Image URL</label>
-               <input type="text" value={coverImage} onChange={(e) => setCoverImage(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00FF00]" placeholder="https://..." />
-               {coverImage && <img src={coverImage} alt="Cover Preview" className="mt-4 w-32 h-32 object-cover rounded-xl shadow-md border border-zinc-200" />}
+               <label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Cover Art Image</label>
+               <input 
+                 type="file" 
+                 accept="image/*"
+                 onChange={(e) => setCoverFile(e.target.files?.[0] || null)} 
+                 className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00FF00]" 
+               />
+               {coverFile && <img src={URL.createObjectURL(coverFile)} alt="Cover Preview" className="mt-4 w-32 h-32 object-cover rounded-xl shadow-md border border-zinc-200" />}
              </div>
              
              <div className="flex items-center gap-3 py-2">
@@ -242,16 +255,23 @@ function ArtistsView() {
   const [adding, setAdding] = useState(false);
   const [name, setName] = useState('');
   const [biography, setBiography] = useState('');
-  const [photoUrl, setPhotoUrl] = useState('');
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const handleSave = async () => {
-    if(!name || !biography || !photoUrl) return alert('All fields required');
+    if(!name || !biography || !photoFile) return alert('All fields including photo are required');
     if(!auth.currentUser) return alert('Not authenticated');
     
     setSubmitting(true);
     try {
       const artistId = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').substring(0, 100) + '-' + Date.now();
+      
+      let photoUrl = '';
+      if (photoFile) {
+        const fileRef = ref(storage, `artist-photos/${artistId}-${photoFile.name}`);
+        const snapshot = await uploadBytes(fileRef, photoFile);
+        photoUrl = await getDownloadURL(snapshot.ref);
+      }
       
       await setDoc(doc(db, 'artists', artistId), {
         name,
@@ -262,7 +282,7 @@ function ArtistsView() {
         updatedAt: serverTimestamp()
       });
       alert('Artist Added!');
-      setName(''); setBiography(''); setPhotoUrl('');
+      setName(''); setBiography(''); setPhotoFile(null);
       setAdding(false);
     } catch(err: any) {
       alert("Error: " + err.message);
@@ -287,9 +307,14 @@ function ArtistsView() {
              <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Artist Name</label><input type="text" value={name} onChange={(e)=>setName(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00FF00]" placeholder="Name" /></div>
              <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Biography</label><textarea value={biography} onChange={(e)=>setBiography(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00FF00]" rows={4} placeholder="Artist biography..."></textarea></div>
              <div>
-               <label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Photo Image URL</label>
-               <input type="text" value={photoUrl} onChange={(e) => setPhotoUrl(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00FF00]" placeholder="https://..." />
-               {photoUrl && <img src={photoUrl} alt="Artist Preview" className="mt-4 w-32 h-32 object-cover rounded-xl shadow-md border border-zinc-200" />}
+               <label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Photo Image</label>
+               <input 
+                 type="file" 
+                 accept="image/*"
+                 onChange={(e) => setPhotoFile(e.target.files?.[0] || null)} 
+                 className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00FF00]" 
+               />
+               {photoFile && <img src={URL.createObjectURL(photoFile)} alt="Artist Preview" className="mt-4 w-32 h-32 object-cover rounded-xl shadow-md border border-zinc-200" />}
              </div>
              <button onClick={handleSave} disabled={submitting} className="bg-black text-white px-6 py-3 rounded-full font-black uppercase tracking-widest text-xs hover:bg-[#00FF00] hover:text-black transition">
                 {submitting ? 'Saving...' : 'Save Artist'}
@@ -312,27 +337,35 @@ function NewsView() {
 
   const [headline, setHeadline] = useState('');
   const [content, setContent] = useState('');
-  const [featuredImage, setFeaturedImage] = useState('');
+  const [file, setFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const handlePublish = async () => {
-    if(!headline || !content) return alert('Headline and content required');
+    if(!headline || !content || !file) return alert('Headline, content, and expected featured image are required');
     if(!auth.currentUser) return alert('Not authenticated');
     
     setSubmitting(true);
     try {
       const newsId = headline.toLowerCase().replace(/[^a-z0-9]+/g, '-').substring(0, 100) + '-' + Date.now();
       
+      let imageUrl = '';
+      if (file) {
+        // Upload the file to Firebase Storage
+        const fileRef = ref(storage, `news-images/${newsId}-${file.name}`);
+        const snapshot = await uploadBytes(fileRef, file);
+        imageUrl = await getDownloadURL(snapshot.ref);
+      }
+      
       await setDoc(doc(db, 'news', newsId), {
         headline,
         content,
-        featuredImage: featuredImage || '',
+        featuredImage: imageUrl,
         userId: auth.currentUser.uid,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       });
       alert('News Published!');
-      setHeadline(''); setContent(''); setFeaturedImage('');
+      setHeadline(''); setContent(''); setFile(null);
       setAdding(false);
     } catch(err: any) {
       alert("Error: " + err.message);
@@ -357,9 +390,14 @@ function NewsView() {
              <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Headline</label><input type="text" value={headline} onChange={(e)=>setHeadline(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00FF00]" placeholder="Breaking News..." /></div>
              <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Content</label><textarea value={content} onChange={(e)=>setContent(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00FF00]" rows={6} placeholder="Write news article here..."></textarea></div>
              <div>
-               <label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Featured Image URL</label>
-               <input type="text" value={featuredImage} onChange={(e) => setFeaturedImage(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00FF00]" placeholder="https://..." />
-               {featuredImage && <img src={featuredImage} alt="News Preview" className="mt-4 w-32 h-32 object-cover rounded-xl shadow-md border border-zinc-200" />}
+               <label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Featured Image</label>
+               <input 
+                 type="file" 
+                 accept="image/*"
+                 onChange={(e) => setFile(e.target.files?.[0] || null)} 
+                 className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00FF00]" 
+               />
+               {file && <img src={URL.createObjectURL(file)} alt="News Preview" className="mt-4 w-32 h-32 object-cover rounded-xl shadow-md border border-zinc-200" />}
              </div>
              
              <div className="flex items-center gap-3 py-2">
