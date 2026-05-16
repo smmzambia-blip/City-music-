@@ -1,0 +1,198 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  role          Role      @default(USER)
+  accounts      Account[]
+  sessions      Session[]
+  likes         Like[]
+  comments      Comment[]
+  playlists     Playlist[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?  @db.Text
+  access_token       String?  @db.Text
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?  @db.Text
+  session_state      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ZedTunes Specific Models
+
+model Song {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique
+  artistId    String
+  albumId     String?
+  coverImage  String
+  audioUrl    String
+  duration    Int      // Duration in seconds
+  releaseDate DateTime
+  lyrics      String?  @db.Text
+  viewCount   Int      @default(0)
+  downloadCount Int      @default(0)
+  
+  artist      Artist   @relation(fields: [artistId], references: [id])
+  album       Album?   @relation(fields: [albumId], references: [id])
+  genres      Genre[]
+  comments    Comment[]
+  likes       Like[]
+  playlists   PlaylistSong[]
+  downloads   Download[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([slug])
+  @@index([artistId])
+}
+
+model Artist {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  bio         String?  @db.Text
+  imageUrl    String?
+  songs       Song[]
+  albums      Album[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  @@index([slug])
+}
+
+model Album {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique
+  artistId    String
+  coverImage  String?
+  releaseDate DateTime
+  
+  artist      Artist   @relation(fields: [artistId], references: [id])
+  songs       Song[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  @@index([slug])
+}
+
+model Genre {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  songs       Song[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Playlist {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique
+  description String?
+  userId      String
+  isPublic    Boolean  @default(true)
+  coverImage  String?
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  songs       PlaylistSong[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model PlaylistSong {
+  playlistId  String
+  songId      String
+  addedAt     DateTime @default(now())
+
+  playlist    Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  song        Song     @relation(fields: [songId], references: [id], onDelete: Cascade)
+
+  @@id([playlistId, songId])
+}
+
+model Comment {
+  id          String   @id @default(cuid())
+  content     String
+  userId      String
+  songId      String
+  
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  song        Song     @relation(fields: [songId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Like {
+  id          String   @id @default(cuid())
+  userId      String
+  songId      String
+  
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  song        Song     @relation(fields: [songId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
+
+  @@unique([userId, songId])
+}
+
+model Download {
+  id          String   @id @default(cuid())
+  songId      String
+  ipAddress   String?
+  
+  song        Song     @relation(fields: [songId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
+}
+
+enum Role {
+  USER
+  ADMIN
+}

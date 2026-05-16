@@ -1,0 +1,27 @@
+@import "tailwindcss";
+
+@theme {
+  --background: #0A0A0A;
+  --foreground: #ffffff;
+  --card: #111111;
+  --color-primary: #00FF00;
+  --color-primary-foreground: #000000;
+}
+
+.dark {
+  --background: #0A0A0A;
+  --foreground: #ffffff;
+  --card: #111111;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@utility text-balance {
+  text-wrap: balance;
+}
