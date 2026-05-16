@@ -5,6 +5,23 @@ import { Search, UserCircle2, Menu, X } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 
+export const NavLogo = () => (
+  <div className="flex items-center gap-3 md:gap-4 group cursor-pointer">
+    <div className="relative flex items-center justify-center w-10 h-10 md:w-12 md:h-12">
+      <div className="absolute inset-0 bg-[#00FF00] rounded-br-[1rem] rounded-tl-[1rem] transform group-hover:rotate-180 transition-transform duration-700"></div>
+      <div className="absolute inset-1 bg-black rounded-br-lg rounded-tl-lg flex items-center justify-center">
+         <svg className="w-5 h-5 md:w-6 md:h-6 text-[#00FF00]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c-1.657 0-3-1.343-3-3s1.343-3 3-3 3 1.343 3 3-1.343 3-3 3zm12-3c-1.657 0-3-1.343-3-3s1.343-3 3-3 3 1.343 3 3-1.343 3-3 3z"/></svg>
+      </div>
+    </div>
+    <div className="flex flex-col">
+      <span className="text-2xl md:text-3xl font-black tracking-tighter leading-none text-black">
+        ZED<span className="text-zinc-400">TUNES</span>
+      </span>
+      <span className="text-[8px] md:text-[9px] font-black tracking-[0.4em] text-[#00FF00] uppercase pt-0.5 md:pt-1">Zambia's Pure Music</span>
+    </div>
+  </div>
+);
+
 export default function Navbar() {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -14,31 +31,31 @@ export default function Navbar() {
   const navLinks = [
     { name: 'Home', href: '/' },
     { name: 'Trending', href: '/trending' },
-    { name: 'Discover', href: '/genres' },
     { name: 'Artists', href: '/artists' },
+    { name: 'About', href: '/about' },
+    { name: 'Contact', href: '/contact' },
   ];
 
   return (
     <nav className="bg-white border-b border-zinc-100 sticky top-0 z-50 transition-all">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Logo Section - Top Center */}
-        <div className="flex justify-center py-4 border-b border-zinc-50 md:py-6">
-          <Link href="/" className="flex items-center gap-2 group">
-            <div className="w-10 h-10 bg-black rounded-lg flex items-center justify-center text-[#00FF00] font-black italic underline transform group-hover:rotate-6 transition-transform">Z</div>
-            <span className="text-3xl font-black tracking-tighter text-black italic">ZEDTUNES</span>
+        <div className="flex justify-center py-4 border-b border-zinc-50 md:py-6 relative z-50 bg-white">
+          <Link href="/" onClick={() => setIsMobileMenuOpen(false)}>
+            <NavLogo />
           </Link>
         </div>
 
         <div className="flex justify-between h-14 md:h-16 items-center">
           
           {/* Left Side: Desktop Menu */}
-          <div className="hidden md:flex items-center space-x-10 flex-1 justify-center">
+          <div className="hidden md:flex items-center space-x-8 flex-1 justify-center">
             {navLinks.map((link) => (
               <Link
                 key={link.name}
                 href={link.href}
-                className={`text-xs font-black uppercase tracking-[0.2em] transition-all hover:tracking-[0.3em] ${
-                  isActive(link.href) ? 'text-[#00FF00] border-b-2 border-[#00FF00]' : 'text-zinc-500 hover:text-black'
+                className={`text-xs font-black uppercase tracking-[0.2em] transition-all hover:tracking-[0.3em] py-2 ${
+                  isActive(link.href) ? 'text-[#00FF00] border-b-2 border-[#00FF00]' : 'text-zinc-500 hover:text-black border-b-2 border-transparent'
                 }`}
               >
                 {link.name}
@@ -47,20 +64,17 @@ export default function Navbar() {
           </div>
 
           {/* Right Side Actions for Mobile - Hamburger */}
-          <div className="flex md:hidden items-center justify-between w-full">
-             <div className="flex items-center gap-4">
-                <button 
-                  className="p-2 text-zinc-500 hover:text-black transition-colors"
-                  onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                >
-                  {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-                </button>
-             </div>
-             {/* Removed login link for users */}
+          <div className="flex md:hidden items-center justify-start w-full absolute top-6 left-4 z-[60]">
+             <button 
+               className="p-2 text-black bg-zinc-50 rounded-full hover:bg-zinc-100 transition-colors shadow-sm"
+               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+             >
+               {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+             </button>
           </div>
 
           {/* Right Side: Search - Desktop */}
-          <div className="hidden md:flex items-center justify-end space-x-6">
+          <div className="hidden md:flex items-center justify-end space-x-6 flex-1 absolute right-6">
             <div className="flex items-center relative group">
                <Search className="w-4 h-4 absolute left-3 text-zinc-300 group-focus-within:text-[#00FF00] transition-colors" />
                <input 
@@ -75,21 +89,14 @@ export default function Navbar() {
 
       {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && (
-        <div className="md:hidden fixed inset-0 z-40 bg-white pt-32 px-6 animate-in slide-in-from-top duration-300">
-           <button 
-             className="absolute top-8 left-6 p-2 text-zinc-800"
-             onClick={() => setIsMobileMenuOpen(false)}
-           >
-             <X className="w-8 h-8" />
-           </button>
-           
-           <div className="space-y-6 flex flex-col items-center">
+        <div className="md:hidden fixed inset-0 z-40 bg-white pt-28 px-6 animate-in slide-in-from-top duration-300 overflow-y-auto pb-40">
+           <div className="space-y-8 flex flex-col items-center">
              {navLinks.map((link) => (
                <Link
                  key={link.name}
                  href={link.href}
                  onClick={() => setIsMobileMenuOpen(false)}
-                 className={`text-2xl font-black uppercase tracking-[0.2em] ${
+                 className={`text-3xl font-black uppercase tracking-[0.2em] ${
                    isActive(link.href) ? 'text-[#00FF00]' : 'text-zinc-800'
                  }`}
                >
@@ -98,11 +105,11 @@ export default function Navbar() {
              ))}
              <div className="pt-8 w-full border-t border-zinc-100 flex flex-col items-center gap-6">
                 <Link
-                  href="/login"
-                  className="text-sm font-bold uppercase tracking-widest text-zinc-300 hover:text-black"
+                  href="/wp-admin"
+                  className="text-xs font-black uppercase tracking-widest text-zinc-400 hover:text-black transition-colors"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
-                  Admin Login
+                  Admin Portal
                 </Link>
              </div>
            </div>

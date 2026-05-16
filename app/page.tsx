@@ -66,45 +66,54 @@ export default function HomePage() {
             </div>
           </section>
 
-          {/* Latest Hits Grid */}
+          {/* Latest Hits List */}
           <section>
-            <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center justify-between mb-8 pb-4 border-b border-zinc-100">
               <div className="flex items-center gap-3">
-                <div className="w-1 h-8 bg-zinc-800"></div>
-                <h3 className="text-2xl font-black tracking-tighter uppercase italic text-zinc-800">Latest Hits</h3>
+                <div className="w-1 h-8 bg-black"></div>
+                <h3 className="text-2xl font-black tracking-tighter uppercase italic text-black">Latest Drops</h3>
               </div>
-              <Link href="/trending" className="text-[10px] font-black text-zinc-400 uppercase tracking-widest hover:text-black transition-colors">View All</Link>
+              <Link href="/trending" className="text-[10px] flex items-center gap-1 font-black text-white hover:text-black bg-black hover:bg-[#00FF00] px-4 py-2 rounded-full uppercase tracking-widest transition-colors">
+                View All <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" /></svg>
+              </Link>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {mockSongs.map((song) => (
-                <Link 
+            
+            <div className="space-y-3">
+              {mockSongs.map((song, idx) => (
+                <div 
                   key={song.id} 
-                  href={`/song/${song.slug}`}
-                  className="group block p-4 bg-zinc-50 rounded-2xl hover:bg-white hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 border border-transparent hover:border-zinc-100"
+                  className="group flex flex-col sm:flex-row sm:items-center gap-4 p-3 bg-zinc-50 border border-transparent rounded-2xl hover:bg-white hover:border-zinc-100 hover:shadow-xl transition-all duration-300"
                 >
-                  <div className="aspect-square bg-zinc-200 rounded-xl mb-4 relative overflow-hidden shadow-sm">
-                    <img
-                      src={song.cover}
-                      alt={song.title}
-                      className="absolute inset-0 object-cover w-full h-full transition duration-500 group-hover:scale-110 group-hover:rotate-1"
-                    />
-                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
-                      <div className="w-12 h-12 bg-[#00FF00] rounded-full flex items-center justify-center text-black shadow-2xl scale-75 group-hover:scale-100 transition-all duration-300">
-                        <Play className="w-6 h-6 fill-current ml-1" />
+                  <div className="flex items-center gap-4 flex-1">
+                    <span className="text-xs font-black text-zinc-300 w-4 text-center group-hover:text-black transition-colors hidden sm:block">{idx + 1}</span>
+                    <div className="relative w-16 h-16 sm:w-14 sm:h-14 bg-zinc-200 rounded-xl overflow-hidden shadow-sm flex-shrink-0">
+                      <img
+                        src={song.cover}
+                        alt={song.title}
+                        className="absolute inset-0 object-cover w-full h-full group-hover:scale-110 transition duration-500"
+                      />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[1px]">
+                        <div className="w-8 h-8 bg-[#00FF00] rounded-full flex items-center justify-center text-black shadow-lg scale-75 group-hover:scale-100 transition-all duration-300">
+                          <Play className="w-4 h-4 fill-current ml-0.5" />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <div>
-                     <p className="font-extrabold text-base truncate text-black mb-0.5 tracking-tight">{song.title}</p>
-                     <p className="text-xs font-bold text-zinc-400 truncate uppercase tracking-wider">{song.artist}</p>
-                  </div>
-                  <div className="mt-4 flex items-center justify-between border-t border-zinc-100 pt-3">
-                    <span className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest">{song.plays} Plays</span>
-                    <div className="w-6 h-6 rounded-full bg-zinc-100 flex items-center justify-center text-zinc-400 group-hover:bg-[#00FF00]/10 group-hover:text-[#00FF00] transition-colors">
-                       <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    <div className="flex flex-col min-w-0 flex-1">
+                       <Link href={`/song/${song.slug}`} className="font-extrabold text-[15px] truncate text-black mb-0.5 group-hover:text-black transition-colors">{song.title}</Link>
+                       <Link href="/artists" className="text-[11px] font-bold text-zinc-400 truncate uppercase tracking-widest hover:text-black transition-colors w-fit">{song.artist}</Link>
                     </div>
                   </div>
-                </Link>
+                  
+                  <div className="flex items-center justify-between sm:justify-end gap-6 sm:w-64 mt-2 sm:mt-0 px-2 sm:px-0">
+                    <div className="flex gap-4">
+                      <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-1.5"><Play className="w-3 h-3 text-zinc-300" /> {song.plays}</span>
+                      <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-1.5"><svg className="w-3 h-3 text-zinc-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> 3:45</span>
+                    </div>
+                    <button className="w-8 h-8 rounded-full border border-zinc-200 flex items-center justify-center text-zinc-400 group-hover:border-black group-hover:bg-black group-hover:text-[#00FF00] transition-all hover:scale-105 active:scale-95 shadow-sm">
+                       <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    </button>
+                  </div>
+                </div>
               ))}
             </div>
           </section>
