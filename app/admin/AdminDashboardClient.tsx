@@ -157,6 +157,7 @@ function SongsView() {
   const [title, setTitle] = useState('');
   const [artist, setArtist] = useState('');
   const [audioUrl, setAudioUrl] = useState('');
+  const [coverImageUrl, setCoverImageUrl] = useState('');
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [description, setDescription] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -183,18 +184,19 @@ function SongsView() {
   };
 
   const handlePublish = async () => {
-    if(!title || !artist || !audioUrl || !coverFile) return alert('All fields including cover image are required');
+    if(!title || !artist || !audioUrl) return alert('Title, artist and audio URL are required');
+    if(!coverFile && !coverImageUrl) return alert('Please provide a cover art URL or upload an image');
     if(!auth.currentUser) return alert('Not authenticated');
     
     setSubmitting(true);
-    setPublishStep('Uploading cover art...');
     let songId = '';
     try {
       const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + Date.now();
       songId = slug.substring(0, 128);
       
-      let imageUrl = '';
+      let imageUrl = coverImageUrl;
       if (coverFile) {
+        setPublishStep('Uploading cover art...');
         const fileRef = ref(storage, `song-covers/${songId}-${coverFile.name}`);
         const uploadTask = uploadBytesResumable(fileRef, coverFile);
         
@@ -226,7 +228,7 @@ function SongsView() {
       });
       setPublishStep('Success!');
       alert('Song Published!');
-      setTitle(''); setArtist(''); setAudioUrl(''); setCoverFile(null); setDescription('');
+      setTitle(''); setArtist(''); setAudioUrl(''); setCoverImageUrl(''); setCoverFile(null); setDescription('');
       setAdding(false);
     } catch(err: any) {
       handleFirestoreError(err, OperationType.WRITE, `songs/${songId}`);
@@ -251,10 +253,13 @@ function SongsView() {
             <div className="space-y-4">
               <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Title</label><input type="text" value={title} onChange={(e)=>setTitle(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--color-primary)]" placeholder="Song Title" /></div>
               <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Artist</label><input type="text" value={artist} onChange={(e)=>setArtist(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--color-primary)]" placeholder="Artist Name" /></div>
-              <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Audio URL (Google Drive/S3/Direct)</label><input type="text" value={audioUrl} onChange={(e)=>setAudioUrl(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--color-primary)]" placeholder="https://..." /></div>
+              <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Audio URL (mp3 link)</label><input type="text" value={audioUrl} onChange={(e)=>setAudioUrl(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--color-primary)]" placeholder="https://..." /></div>
               <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Description (Optional)</label><textarea value={description} onChange={(e)=>setDescription(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--color-primary)]" rows={3} placeholder="Song description, lyrics, etc..." /></div>
               <div>
-                <label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Cover Art Image</label>
+                <label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Cover Art URL (Optional if uploading)</label>
+                <input type="text" value={coverImageUrl} onChange={(e)=>setCoverImageUrl(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--color-primary)] mb-2" placeholder="https://..." />
+                
+                <label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">OR Upload Cover Image</label>
                 <input 
                   type="file" 
                   accept="image/*"
@@ -323,6 +328,7 @@ function ArtistsView() {
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState('');
   const [biography, setBiography] = useState('');
+  const [photoUrl, setPhotoUrl] = useState('');
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [saveStep, setSaveStep] = useState('');
@@ -348,17 +354,18 @@ function ArtistsView() {
   };
 
   const handleSave = async () => {
-    if(!name || !biography || !photoFile) return alert('All fields including photo are required');
+    if(!name || !biography) return alert('Name and biography are required');
+    if(!photoFile && !photoUrl) return alert('Please provide a photo URL or upload a photo');
     if(!auth.currentUser) return alert('Not authenticated');
     
     setSubmitting(true);
-    setSaveStep('Uploading photo...');
     let artistId = '';
     try {
       artistId = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').substring(0, 100) + '-' + Date.now();
       
-      let photoUrl = '';
+      let finalPhotoUrl = photoUrl;
       if (photoFile) {
+        setSaveStep('Uploading photo...');
         const fileRef = ref(storage, `artist-photos/${artistId}-${photoFile.name}`);
         const uploadTask = uploadBytesResumable(fileRef, photoFile);
         
@@ -372,21 +379,21 @@ function ArtistsView() {
             () => resolve(null)
           );
         });
-        photoUrl = await getDownloadURL(uploadTask.snapshot.ref);
+        finalPhotoUrl = await getDownloadURL(uploadTask.snapshot.ref);
       }
       
       setSaveStep('Saving artist profile...');
       await setDoc(doc(db, 'artists', artistId), {
         name,
         biography,
-        photoUrl,
+        photoUrl: finalPhotoUrl,
         userId: auth.currentUser.uid,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       });
       setSaveStep('Success!');
       alert('Artist Added!');
-      setName(''); setBiography(''); setPhotoFile(null);
+      setName(''); setBiography(''); setPhotoUrl(''); setPhotoFile(null);
       setAdding(false);
     } catch(err: any) {
       handleFirestoreError(err, OperationType.WRITE, `artists/${artistId}`);
@@ -412,7 +419,10 @@ function ArtistsView() {
               <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Artist Name</label><input type="text" value={name} onChange={(e)=>setName(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--color-primary)]" placeholder="Name" /></div>
               <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Biography</label><textarea value={biography} onChange={(e)=>setBiography(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--color-primary)]" rows={4} placeholder="Artist biography..."></textarea></div>
               <div>
-                <label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Photo Image</label>
+                <label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Photo URL (Optional if uploading)</label>
+                <input type="text" value={photoUrl} onChange={(e)=>setPhotoUrl(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--color-primary)] mb-2" placeholder="https://..." />
+                
+                <label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">OR Upload Photo</label>
                 <input 
                   type="file" 
                   accept="image/*"
@@ -464,6 +474,7 @@ function NewsView() {
 
   const [headline, setHeadline] = useState('');
   const [content, setContent] = useState('');
+  const [featuredImageUrl, setFeaturedImageUrl] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [publishStep, setPublishStep] = useState('');
@@ -490,17 +501,18 @@ function NewsView() {
   };
 
   const handlePublish = async () => {
-    if(!headline || !content || !file) return alert('Headline, content, and expected featured image are required');
+    if(!headline || !content) return alert('Headline and content are required');
+    if(!file && !featuredImageUrl) return alert('Please provide a featured image URL or upload an image');
     if(!auth.currentUser) return alert('Not authenticated');
     
     setSubmitting(true);
-    setPublishStep('Uploading image...');
     let newsId = '';
     try {
       newsId = headline.toLowerCase().replace(/[^a-z0-9]+/g, '-').substring(0, 100) + '-' + Date.now();
       
-      let imageUrl = '';
+      let finalImageUrl = featuredImageUrl;
       if (file) {
+        setPublishStep('Uploading image...');
         const fileRef = ref(storage, `news-images/${newsId}-${file.name}`);
         const uploadTask = uploadBytesResumable(fileRef, file);
         
@@ -514,21 +526,21 @@ function NewsView() {
             () => resolve(null)
           );
         });
-        imageUrl = await getDownloadURL(uploadTask.snapshot.ref);
+        finalImageUrl = await getDownloadURL(uploadTask.snapshot.ref);
       }
       
       setPublishStep('Saving article...');
       await setDoc(doc(db, 'news', newsId), {
         headline,
         content,
-        featuredImage: imageUrl,
+        featuredImage: finalImageUrl,
         userId: auth.currentUser.uid,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       });
       setPublishStep('Success!');
       alert('News Published!');
-      setHeadline(''); setContent(''); setFile(null);
+      setHeadline(''); setContent(''); setFeaturedImageUrl(''); setFile(null);
       setAdding(false);
     } catch(err: any) {
       handleFirestoreError(err, OperationType.WRITE, `news/${newsId}`);
@@ -597,7 +609,10 @@ function NewsView() {
               <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Headline</label><input type="text" value={headline} onChange={(e)=>setHeadline(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--color-primary)]" placeholder="Breaking News..." /></div>
               <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Content</label><textarea value={content} onChange={(e)=>setContent(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--color-primary)]" rows={6} placeholder="Write news article here..."></textarea></div>
               <div>
-                <label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Featured Image</label>
+                <label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Featured Image URL (Optional if uploading)</label>
+                <input type="text" value={featuredImageUrl} onChange={(e)=>setFeaturedImageUrl(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--color-primary)] mb-2" placeholder="https://..." />
+
+                <label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">OR Upload Image</label>
                 <input 
                   type="file" 
                   accept="image/*"
