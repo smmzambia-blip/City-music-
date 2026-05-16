@@ -116,6 +116,7 @@ function DashboardView() {
 
 function SongsView() {
   const [adding, setAdding] = useState(false);
+  const [instantIndex, setInstantIndex] = useState(true);
   
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -134,6 +135,20 @@ function SongsView() {
              <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Artist</label><input type="text" className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00FF00]" placeholder="Artist Name" /></div>
              <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Audio URL or Upload</label><input type="text" className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00FF00]" placeholder="https://..." /></div>
              <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Cover Art URL</label><input type="text" className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00FF00]" placeholder="https://..." /></div>
+             
+             <div className="flex items-center gap-3 py-2">
+               <input 
+                 type="checkbox" 
+                 id="google-index-song" 
+                 checked={instantIndex}
+                 onChange={(e) => setInstantIndex(e.target.checked)}
+                 className="w-5 h-5 accent-[#00FF00] cursor-pointer" 
+               />
+               <label htmlFor="google-index-song" className="text-xs font-black uppercase tracking-widest text-black cursor-pointer">
+                 Trigger Instant Google Indexing
+               </label>
+             </div>
+
              <button className="bg-black text-white px-6 py-3 rounded-full font-black uppercase tracking-widest text-xs hover:bg-[#00FF00] hover:text-black transition">Publish Song</button>
            </div>
          </div>
@@ -180,6 +195,7 @@ function ArtistsView() {
 
 function NewsView() {
   const [adding, setAdding] = useState(false);
+  const [instantIndex, setInstantIndex] = useState(true);
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
        <div className="flex justify-between items-center border-b border-zinc-100 pb-4">
@@ -196,6 +212,20 @@ function NewsView() {
              <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Headline</label><input type="text" className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00FF00]" placeholder="Breaking News..." /></div>
              <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Content</label><textarea className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00FF00]" rows={6} placeholder="Write news article here..."></textarea></div>
              <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Featured Image URL</label><input type="text" className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00FF00]" placeholder="https://..." /></div>
+             
+             <div className="flex items-center gap-3 py-2">
+               <input 
+                 type="checkbox" 
+                 id="google-index-news" 
+                 checked={instantIndex}
+                 onChange={(e) => setInstantIndex(e.target.checked)}
+                 className="w-5 h-5 accent-[#00FF00] cursor-pointer" 
+               />
+               <label htmlFor="google-index-news" className="text-xs font-black uppercase tracking-widest text-black cursor-pointer">
+                 Trigger Instant Google Indexing
+               </label>
+             </div>
+
              <button className="bg-black text-white px-6 py-3 rounded-full font-black uppercase tracking-widest text-xs hover:bg-[#00FF00] hover:text-black transition">Publish Article</button>
            </div>
          </div>
@@ -246,6 +276,8 @@ function AppearanceView() {
 }
 
 function SettingsView() {
+  const [autoPilotOpen, setAutoPilotOpen] = useState(false);
+
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
        <div className="border-b border-zinc-100 pb-4">
@@ -260,6 +292,46 @@ function SettingsView() {
             <button className="bg-black text-white px-6 py-3 rounded-full font-black uppercase tracking-widest text-xs shadow-lg hover:bg-[#00FF00] hover:text-black transition">Save Changes</button>
           </div>
        </div>
+
+       <div className="border-b border-zinc-100 pb-4 mt-12">
+         <h2 className="text-2xl font-black italic tracking-tighter uppercase">Auto-Pilot & Bot Settings</h2>
+         <p className="text-zinc-500 text-sm font-medium mt-1">Configure automated content generation even when you are offline.</p>
+       </div>
+
+       <div className="bg-zinc-50 border border-zinc-200 p-6 rounded-2xl max-w-2xl">
+          <div className="space-y-6">
+            <div className="flex items-center justify-between border-b border-zinc-200 pb-4">
+              <div>
+                <h3 className="font-black uppercase tracking-widest text-sm text-black">Auto-Post Sports News</h3>
+                <p className="text-xs text-zinc-500 font-medium">Cron job pulls latest sports updates daily.</p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" className="sr-only peer" defaultChecked />
+                <div className="w-11 h-6 bg-zinc-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#00FF00]"></div>
+              </label>
+            </div>
+            
+            <div className="flex items-center justify-between border-b border-zinc-200 pb-4">
+              <div>
+                <h3 className="font-black uppercase tracking-widest text-sm text-black">Auto-Post Music Updates</h3>
+                <p className="text-xs text-zinc-500 font-medium">Cron job aggregates industry music news automatically.</p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" className="sr-only peer" defaultChecked />
+                <div className="w-11 h-6 bg-zinc-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#00FF00]"></div>
+              </label>
+            </div>
+
+            <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-xl text-yellow-800 text-sm font-medium">
+              <strong>Note:</strong> Auto-posting bots will run in the background (using Vercel Cron API) while you are not logged in.
+            </div>
+            
+            <button className="bg-black text-[#00FF00] px-6 py-3 rounded-full font-black uppercase tracking-widest text-xs hover:opacity-80 transition flex items-center justify-center w-full">
+              Save Automation Settings
+            </button>
+          </div>
+       </div>
+
     </div>
   );
 }
