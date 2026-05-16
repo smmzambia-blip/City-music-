@@ -1,0 +1,41 @@
+{
+  "entities": {
+    "Song": {
+      "title": "Song",
+      "description": "A song track stored in the database.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "artist": { "type": "string" },
+        "audioUrl": { "type": "string" },
+        "coverImage": { "type": "string" },
+        "plays": { "type": "number" },
+        "slug": { "type": "string" },
+        "userId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "artist", "audioUrl", "coverImage", "plays", "slug", "userId", "createdAt", "updatedAt"]
+    },
+    "Admin": {
+      "title": "Admin",
+      "description": "Authorized admin users",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin"] }
+      },
+      "required": ["email", "role"]
+    }
+  },
+  "firestore": {
+    "songs/{songId}": {
+      "schema": { "$ref": "#/entities/Song" },
+      "description": "Collection of songs available for streaming"
+    },
+    "admins/{adminId}": {
+      "schema": { "$ref": "#/entities/Admin" },
+      "description": "Collection of admins"
+    }
+  }
+}

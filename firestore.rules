@@ -1,0 +1,69 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+    
+    function isSignedIn() { return request.auth != null; }
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    function isAdmin() { 
+      return isSignedIn() && request.auth.token.email_verified == true && (
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) || 
+        request.auth.token.email == 'hilzmg70@gmail.com'
+      );
+    }
+    
+    function isValidAdmin(data) {
+      return data.keys().hasAll(['email', 'role']) && 
+             data.keys().size() == 2 &&
+             data.email is string && data.email.size() >= 5 && data.email.size() <= 100 &&
+             data.role == 'admin';
+    }
+    
+    function isValidSong(data) {
+      return data.keys().hasAll(['title', 'artist', 'audioUrl', 'coverImage', 'plays', 'slug', 'userId', 'createdAt', 'updatedAt']) &&
+             data.keys().size() == 9 &&
+             data.title is string && data.title.size() > 0 && data.title.size() <= 200 &&
+             data.artist is string && data.artist.size() > 0 && data.artist.size() <= 200 &&
+             data.audioUrl is string && data.audioUrl.size() > 0 && data.audioUrl.size() <= 1000 &&
+             data.coverImage is string && data.coverImage.size() > 0 && data.coverImage.size() <= 1000 &&
+             data.plays is number && data.plays >= 0 &&
+             data.slug is string && data.slug.size() > 0 && data.slug.size() <= 250 &&
+             data.userId == request.auth.uid &&
+             data.createdAt is timestamp &&
+             data.updatedAt is timestamp;
+    }
+
+    match /admins/{adminId} {
+      // Anyone can read if they are admin, or the console reading it 
+      // Actually reading one's own doc to check role is fine.
+      allow read: if isSignedIn() && (request.auth.uid == adminId || isAdmin());
+      // Only existing admins (like the bootstrap admin) can create other admins
+      allow create: if isAdmin() &&
+                    isValidId(adminId) && 
+                    adminId == request.auth.uid && // or a new uid if they are creating another admin? Let's say we only let people add themselves if they are bootstrap admin, or an existing admin can add any valid admin body.
+                    isValidAdmin(incoming());
+      allow update: if false; // Role and email shouldn't change, or only by admin
+      allow delete: if isAdmin();
+    }
+
+    match /songs/{songId} {
+      allow read: if true; // Public can stream! No login required.
+      allow list: if true;
+      allow create: if isAdmin() && 
+                    isValidId(songId) &&
+                    isValidSong(incoming()) &&
+                    incoming().createdAt == request.time &&
+                    incoming().updatedAt == request.time;
+      allow update: if isAdmin() && 
+                    isValidSong(incoming()) &&
+                    incoming().createdAt == existing().createdAt &&
+                    incoming().updatedAt == request.time &&
+                    incoming().userId == existing().userId;
+      allow delete: if isAdmin();
+    }
+  }
+}
