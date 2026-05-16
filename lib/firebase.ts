@@ -1,12 +1,9 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { initializeFirestore, setLogLevel, memoryLocalCache } from 'firebase/firestore';
+import { initializeFirestore, memoryLocalCache } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
 import appletConfig from '../firebase-applet-config.json';
-
-// Enable debug logging
-setLogLevel('debug');
 
 const isCustomFirebase = !!process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
@@ -28,13 +25,9 @@ const databaseId = isCustomFirebase
 // Configure Firestore with maximum stability settings for AI Studio environment
 export const db = databaseId && databaseId !== '(default)'
   ? initializeFirestore(app, { 
-      experimentalForceLongPolling: true,
-      useFetchStreams: false,
       localCache: memoryLocalCache()
     } as any, databaseId)
   : initializeFirestore(app, { 
-      experimentalForceLongPolling: true,
-      useFetchStreams: false,
       localCache: memoryLocalCache()
     } as any);
 

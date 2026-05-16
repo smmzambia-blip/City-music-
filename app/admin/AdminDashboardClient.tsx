@@ -92,28 +92,34 @@ function DashboardView() {
 
   useEffect(() => {
     const songsPath = 'songs';
+    const artistsPath = 'artists';
+    const newsPath = 'news';
+
     const qSongs = query(collection(db, songsPath));
+    const qArtists = query(collection(db, artistsPath));
+    const qNews = query(collection(db, newsPath));
+
     const unsubSongs = onSnapshot(qSongs, (snap) => {
-      const artistsPath = 'artists';
-      const qArtists = query(collection(db, artistsPath));
-      getDocs(qArtists).then(artistsSnap => {
-        const newsPath = 'news';
-        const qNews = query(collection(db, newsPath));
-        getDocs(qNews).then(newsSnap => {
-          let totalPlays = 0;
-          snap.forEach(doc => {
-            totalPlays += (doc.data().plays || 0);
-          });
-          setStats({
-            songs: snap.size,
-            artists: artistsSnap.size,
-            news: newsSnap.size,
-            plays: totalPlays
-          });
-        }).catch(err => handleFirestoreError(err, OperationType.GET, newsPath));
-      }).catch(err => handleFirestoreError(err, OperationType.GET, artistsPath));
+      let totalPlays = 0;
+      snap.forEach(doc => {
+        totalPlays += (doc.data().plays || 0);
+      });
+      setStats(prev => ({ ...prev, songs: snap.size, plays: totalPlays }));
     }, (err) => handleFirestoreError(err, OperationType.LIST, songsPath));
-    return () => unsubSongs();
+
+    const unsubArtists = onSnapshot(qArtists, (snap) => {
+      setStats(prev => ({ ...prev, artists: snap.size }));
+    }, (err) => handleFirestoreError(err, OperationType.LIST, artistsPath));
+
+    const unsubNews = onSnapshot(qNews, (snap) => {
+      setStats(prev => ({ ...prev, news: snap.size }));
+    }, (err) => handleFirestoreError(err, OperationType.LIST, newsPath));
+
+    return () => {
+      unsubSongs();
+      unsubArtists();
+      unsubNews();
+    };
   }, []);
 
   return (
@@ -154,7 +160,8 @@ function SongsView() {
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [description, setDescription] = useState('');
   const [submitting, setSubmitting] = useState(false);
-
+  const [publishStep, setPublishStep] = useState('');
+  
   useEffect(() => {
     const songsPath = 'songs';
     const q = query(collection(db, songsPath), orderBy('createdAt', 'desc'));
@@ -180,6 +187,7 @@ function SongsView() {
     if(!auth.currentUser) return alert('Not authenticated');
     
     setSubmitting(true);
+    setPublishStep('Uploading cover art...');
     let songId = '';
     try {
       const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + Date.now();
@@ -192,6 +200,7 @@ function SongsView() {
         imageUrl = await getDownloadURL(snapshot.ref);
       }
       
+      setPublishStep('Saving song data...');
       await setDoc(doc(db, 'songs', songId), {
         title,
         artist,
@@ -204,6 +213,7 @@ function SongsView() {
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       });
+      setPublishStep('Success!');
       alert('Song Published!');
       setTitle(''); setArtist(''); setAudioUrl(''); setCoverFile(null); setDescription('');
       setAdding(false);
@@ -211,6 +221,7 @@ function SongsView() {
       handleFirestoreError(err, OperationType.WRITE, `songs/${songId}`);
     } finally {
       setSubmitting(false);
+      setPublishStep('');
     }
   };
 
@@ -256,7 +267,7 @@ function SongsView() {
               </div>
 
               <button onClick={handlePublish} disabled={submitting} className="bg-black text-white px-6 py-3 rounded-full font-black uppercase tracking-widest text-xs hover:bg-[var(--color-primary)] hover:text-black transition">
-                 {submitting ? 'Publishing...' : 'Publish Song'}
+                 {submitting ? (publishStep || 'Publishing...') : 'Publish Song'}
               </button>
             </div>
           </div>
@@ -303,6 +314,7 @@ function ArtistsView() {
   const [biography, setBiography] = useState('');
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [saveStep, setSaveStep] = useState('');
 
   useEffect(() => {
     const path = 'artists';
@@ -329,6 +341,7 @@ function ArtistsView() {
     if(!auth.currentUser) return alert('Not authenticated');
     
     setSubmitting(true);
+    setSaveStep('Uploading photo...');
     let artistId = '';
     try {
       artistId = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').substring(0, 100) + '-' + Date.now();
@@ -340,6 +353,7 @@ function ArtistsView() {
         photoUrl = await getDownloadURL(snapshot.ref);
       }
       
+      setSaveStep('Saving artist profile...');
       await setDoc(doc(db, 'artists', artistId), {
         name,
         biography,
@@ -348,6 +362,7 @@ function ArtistsView() {
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       });
+      setSaveStep('Success!');
       alert('Artist Added!');
       setName(''); setBiography(''); setPhotoFile(null);
       setAdding(false);
@@ -355,6 +370,7 @@ function ArtistsView() {
       handleFirestoreError(err, OperationType.WRITE, `artists/${artistId}`);
     } finally {
       setSubmitting(false);
+      setSaveStep('');
     }
   };
 
@@ -384,7 +400,7 @@ function ArtistsView() {
                 {photoFile && <img src={URL.createObjectURL(photoFile)} alt="Artist Preview" className="mt-4 w-32 h-32 object-cover rounded-xl shadow-md border border-zinc-200" />}
               </div>
               <button onClick={handleSave} disabled={submitting} className="bg-black text-white px-6 py-3 rounded-full font-black uppercase tracking-widest text-xs hover:bg-[var(--color-primary)] hover:text-black transition">
-                 {submitting ? 'Saving...' : 'Save Artist'}
+                 {submitting ? (saveStep || 'Saving...') : 'Save Artist'}
               </button>
             </div>
           </div>
