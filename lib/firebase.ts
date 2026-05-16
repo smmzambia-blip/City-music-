@@ -25,9 +25,13 @@ const databaseId = isCustomFirebase
 // Configure Firestore with maximum stability settings for AI Studio environment
 export const db = databaseId && databaseId !== '(default)'
   ? initializeFirestore(app, { 
+      experimentalForceLongPolling: true,
+      useFetchStreams: false,
       localCache: memoryLocalCache()
     } as any, databaseId)
   : initializeFirestore(app, { 
+      experimentalForceLongPolling: true,
+      useFetchStreams: false,
       localCache: memoryLocalCache()
     } as any);
 

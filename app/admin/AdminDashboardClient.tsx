@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { auth, db, storage } from '../../lib/firebase';
 import { handleFirestoreError, OperationType } from '../../lib/firebase-errors';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { collection, onSnapshot, getDocs, doc, setDoc, serverTimestamp, query, orderBy, deleteDoc } from 'firebase/firestore';
 import { LayoutDashboard, Music, Users, FileText, Settings, LogOut, Plus, Palette, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -196,8 +196,19 @@ function SongsView() {
       let imageUrl = '';
       if (coverFile) {
         const fileRef = ref(storage, `song-covers/${songId}-${coverFile.name}`);
-        const snapshot = await uploadBytes(fileRef, coverFile);
-        imageUrl = await getDownloadURL(snapshot.ref);
+        const uploadTask = uploadBytesResumable(fileRef, coverFile);
+        
+        await new Promise((resolve, reject) => {
+          uploadTask.on('state_changed', 
+            (snapshot) => {
+              const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+              setPublishStep(`Uploading Cover: ${Math.round(progress)}%`);
+            }, 
+            (error) => reject(error), 
+            () => resolve(null)
+          );
+        });
+        imageUrl = await getDownloadURL(uploadTask.snapshot.ref);
       }
       
       setPublishStep('Saving song data...');
@@ -349,8 +360,19 @@ function ArtistsView() {
       let photoUrl = '';
       if (photoFile) {
         const fileRef = ref(storage, `artist-photos/${artistId}-${photoFile.name}`);
-        const snapshot = await uploadBytes(fileRef, photoFile);
-        photoUrl = await getDownloadURL(snapshot.ref);
+        const uploadTask = uploadBytesResumable(fileRef, photoFile);
+        
+        await new Promise((resolve, reject) => {
+          uploadTask.on('state_changed', 
+            (snapshot) => {
+              const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+              setSaveStep(`Uploading Photo: ${Math.round(progress)}%`);
+            }, 
+            (error) => reject(error), 
+            () => resolve(null)
+          );
+        });
+        photoUrl = await getDownloadURL(uploadTask.snapshot.ref);
       }
       
       setSaveStep('Saving artist profile...');
@@ -444,6 +466,7 @@ function NewsView() {
   const [content, setContent] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [publishStep, setPublishStep] = useState('');
   const [botRunning, setBotRunning] = useState(false);
 
   useEffect(() => {
@@ -471,6 +494,7 @@ function NewsView() {
     if(!auth.currentUser) return alert('Not authenticated');
     
     setSubmitting(true);
+    setPublishStep('Uploading image...');
     let newsId = '';
     try {
       newsId = headline.toLowerCase().replace(/[^a-z0-9]+/g, '-').substring(0, 100) + '-' + Date.now();
@@ -478,10 +502,22 @@ function NewsView() {
       let imageUrl = '';
       if (file) {
         const fileRef = ref(storage, `news-images/${newsId}-${file.name}`);
-        const snapshot = await uploadBytes(fileRef, file);
-        imageUrl = await getDownloadURL(snapshot.ref);
+        const uploadTask = uploadBytesResumable(fileRef, file);
+        
+        await new Promise((resolve, reject) => {
+          uploadTask.on('state_changed', 
+            (snapshot) => {
+              const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+              setPublishStep(`Uploading Image: ${Math.round(progress)}%`);
+            }, 
+            (error) => reject(error), 
+            () => resolve(null)
+          );
+        });
+        imageUrl = await getDownloadURL(uploadTask.snapshot.ref);
       }
       
+      setPublishStep('Saving article...');
       await setDoc(doc(db, 'news', newsId), {
         headline,
         content,
@@ -490,6 +526,7 @@ function NewsView() {
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       });
+      setPublishStep('Success!');
       alert('News Published!');
       setHeadline(''); setContent(''); setFile(null);
       setAdding(false);
@@ -497,6 +534,7 @@ function NewsView() {
       handleFirestoreError(err, OperationType.WRITE, `news/${newsId}`);
     } finally {
       setSubmitting(false);
+      setPublishStep('');
     }
   };
 
@@ -533,7 +571,7 @@ function NewsView() {
               disabled={botRunning}
               className="flex items-center gap-2 bg-black text-[var(--color-primary)] px-4 py-2 rounded-full font-black uppercase tracking-widest text-xs hover:opacity-80 transition disabled:opacity-50"
             >
-              {botRunning ? 'Bot Running...' : 'Run Auto-Post Bot'}
+              {botRunning ? 'Bot is researching & writing...' : 'Run Auto-Post Bot'}
             </button>
             <button onClick={()=>setAdding(!adding)} className="flex items-center gap-2 bg-[var(--color-primary)] text-black px-4 py-2 rounded-full font-black uppercase tracking-widest text-xs hover:bg-black hover:text-[var(--color-primary)] transition">
               {adding ? 'Cancel' : <><Plus className="w-4 h-4"/> Publish News</>}
@@ -576,7 +614,7 @@ function NewsView() {
               </div>
 
               <button onClick={handlePublish} disabled={submitting} className="bg-black text-white px-6 py-3 rounded-full font-black uppercase tracking-widest text-xs hover:bg-[var(--color-primary)] hover:text-black transition">
-                 {submitting ? 'Publishing...' : 'Publish Article'}
+                 {submitting ? (publishStep || 'Publishing...') : 'Publish Article'}
               </button>
             </div>
           </div>
