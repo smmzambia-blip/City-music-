@@ -3,8 +3,7 @@ import { NextResponse } from 'next/server';
 // This API Route acts as a Cron Job handler (configured in vercel.json)
 // and handles fetching/generating News organically in the background.
 export async function GET(request: Request) {
-  // Normally you would check an API Key or Authorization header here
-  // to ensure only Vercel Cron can call this.
+  // 1. Security: Ensure only Vercel's Cron scheduler can trigger this
   const authHeader = request.headers.get('authorization');
   if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     console.warn('[Cron] Unauthorized auto-post attempt');
@@ -12,31 +11,42 @@ export async function GET(request: Request) {
   }
 
   try {
-    console.log('[Cron] Executing auto-post routine for Sports & Music news...');
+    console.log('[Cron] Executing auto-post routine...');
     
-    // In a real application, you would:
-    // 1. Fetch live news from NewsAPI, rapidapi, or scrape standard sources.
-    // 2. Or pass it to an AI model (like Gemini) to rewrite it uniquely.
-    // 3. Save it to Firebase admin:
-    // await db.collection('news').add({
-    //   title: generatedHeadline,
-    //   content: generatedText,
-    //   category: 'Sports',
-    //   createdAt: new Date()
-    // });
+    // 2. Fetch live data (e.g., from NewsAPI, rapidapi, or web scraping)
+    // const res = await fetch(`https://newsapi.org/v2/top-headlines?category=sports&apiKey=${process.env.NEWS_API_KEY}`);
+    // const data = await res.json();
+    // const article = data.articles[0];
 
-    // Mock successful insertion processing
-    const generatedPosts = [
-       { category: 'Sports', headline: 'Zambian Athlete secures gold in regional marathon.' },
-       { category: 'Music', headline: 'Local Star Drops Surprise EP Midnight.' }
-    ];
+    // 3. ENFORCE COVER ART:
+    // If the fetched article doesn't have an image, we assign a rich fallback image automatically.
+    const fallbackImage = `https://picsum.photos/seed/${Date.now()}/800/600`;
+    // const finalCoverArt = article.urlToImage || fallbackImage;
+    const finalCoverArt = fallbackImage;
 
-    console.log('[Cron] Generated posts:', generatedPosts);
+    const botPost = {
+      headline: `Automated Update: ${new Date().toLocaleTimeString()}`,
+      content: "This is an automated background post. It will ALWAYS include cover art, regardless of whether the original source provided an image.",
+      featuredImage: finalCoverArt, // GUARANTEED COVER ART
+      userId: 'system-auto-bot',    // Bot identifier
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    // 4. Save to Database:
+    // IMPORTANT: Since this runs in the background (no logged-in user), 
+    // it will fail your Firestore Security Rules if you use the standard client SDK.
+    // Instead, you must install and initialize 'firebase-admin' to securely push data:
+    // 
+    // import * as admin from 'firebase-admin';
+    // await admin.firestore().collection('news').add(botPost);
+
+    console.log('[Cron] Generated post with cover art:', botPost.featuredImage);
 
     return NextResponse.json({ 
       success: true, 
-      message: 'Background auto-posting completed.',
-      posts: generatedPosts 
+      message: 'Background auto-posting completed with guaranteed cover art.',
+      post: botPost 
     });
   } catch (err: any) {
     console.error('[Cron] Error:', err);
