@@ -37,7 +37,7 @@ export default function Navbar() {
   ];
 
   return (
-    <nav className="bg-white border-b border-zinc-100 sticky top-0 z-50 transition-all">
+    <nav className="bg-white border-b border-zinc-100 transition-all">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Logo Section - Top Center */}
         <div className="flex justify-center py-4 border-b border-zinc-50 md:py-6 relative z-50 bg-white">
