@@ -51,8 +51,8 @@ export default function HomePage() {
       </div>
 
       <div className="flex flex-col lg:flex-row gap-12">
-        {/* Songs Section */}
-        <div className="flex-1 space-y-12">
+        {/* Main Content */}
+        <div className="flex-1 space-y-16">
           {/* Trending Section */}
           <section>
             <div className="flex items-center justify-between mb-8">
@@ -87,7 +87,40 @@ export default function HomePage() {
                   </div>
                 </Link>
               ))}
-              {songs.length === 0 && <p className="text-zinc-500 text-sm italic py-4">No trending songs found.</p>}
+              {songs.length === 0 && (
+                <div className="p-8 text-center bg-zinc-50 rounded-2xl border border-dashed border-zinc-200">
+                  <p className="text-zinc-400 font-bold uppercase tracking-widest text-[10px]">No trending songs found.</p>
+                </div>
+              )}
+            </div>
+          </section>
+
+          {/* Latest News Feed */}
+          <section>
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center gap-3">
+                <div className="w-1 h-8 bg-[var(--color-primary)]"></div>
+                <h3 className="text-2xl font-black tracking-tighter uppercase italic">Latest News</h3>
+              </div>
+              <Link href="/news" className="text-[10px] font-black text-zinc-400 uppercase tracking-widest hover:text-black transition-colors">All News</Link>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {news.length > 0 ? (
+                news.map((item) => (
+                  <Link key={`home-news-${item.id}`} href="/news" className="group bg-zinc-50 rounded-2xl p-4 border border-transparent hover:bg-white hover:border-zinc-100 hover:shadow-xl transition-all">
+                    <div className="aspect-video rounded-xl overflow-hidden mb-4 bg-zinc-200">
+                      <img src={item.featuredImage} alt={item.headline} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    </div>
+                    <span className="text-[9px] font-black text-[var(--color-primary)] uppercase tracking-widest mb-2 block italic">Breaking News</span>
+                    <h4 className="font-extrabold text-black group-hover:text-[var(--color-primary)] transition-colors line-clamp-2 leading-tight">{item.headline}</h4>
+                  </Link>
+                ))
+              ) : (
+                <div className="col-span-full p-12 text-center bg-zinc-50 rounded-2xl border border-dashed border-zinc-200">
+                   <p className="text-zinc-400 font-bold uppercase tracking-widest text-[10px]">Your daily music news will appear here.</p>
+                </div>
+              )}
             </div>
           </section>
 
@@ -179,28 +212,6 @@ export default function HomePage() {
               ))}
             </div>
           </div>
-
-          {news.length > 0 && (
-            <div>
-              <h3 className="text-xs font-black text-zinc-300 uppercase tracking-[3px] mb-6">Trending News</h3>
-              <div className="space-y-4">
-                {news.map((item) => (
-                  <Link key={item.id} href="/news" className="block group">
-                    <div className="flex gap-3">
-                      <div className="w-16 h-16 rounded-xl overflow-hidden bg-zinc-100 shrink-0">
-                        <img src={item.featuredImage} alt={item.headline} className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
-                      </div>
-                      <div className="min-w-0">
-                        <h4 className="text-xs font-black line-clamp-2 leading-tight group-hover:text-[var(--color-primary)] transition-colors text-black">{item.headline}</h4>
-                        <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mt-1 block">Zambia News</span>
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-              <Link href="/news" className="block mt-4 text-center py-2 border border-zinc-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-zinc-400 hover:bg-black hover:text-[var(--color-primary)] transition-colors">View All News</Link>
-            </div>
-          )}
         </div>
       </div>
     </div>
