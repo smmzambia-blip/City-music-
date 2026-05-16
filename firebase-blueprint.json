@@ -11,11 +11,12 @@
         "coverImage": { "type": "string" },
         "plays": { "type": "number" },
         "slug": { "type": "string" },
+        "description": { "type": "string" },
         "userId": { "type": "string" },
         "createdAt": { "type": "string", "format": "date-time" },
         "updatedAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["title", "artist", "audioUrl", "coverImage", "plays", "slug", "userId", "createdAt", "updatedAt"]
+      "required": ["title", "artist", "audioUrl", "coverImage", "plays", "slug", "description", "userId", "createdAt", "updatedAt"]
     },
     "Admin": {
       "title": "Admin",

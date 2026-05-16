@@ -1,9 +1,12 @@
 import { NextResponse } from 'next/server';
 
-// This API Route acts as a Cron Job handler (configured in vercel.json)
-// and handles fetching/generating News organically in the background.
+// This API Route acts as a Cron Job handler.
+// To run this automatically, use a free service like cron-job.org
+// and point it to your production URL + /api/cron/auto-post.
+// If using CRON_SECRET, add an Authorization header in your cron service:
+// Authorization: Bearer YOUR_CRON_SECRET
 export async function GET(request: Request) {
-  // 1. Security: Ensure only Vercel's Cron scheduler can trigger this
+  // 1. Security: Ensure only authorized webhook/cron schedulers can trigger this
   const authHeader = request.headers.get('authorization');
   if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     console.warn('[Cron] Unauthorized auto-post attempt');

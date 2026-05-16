@@ -1,8 +1,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
-import { auth, db, storage } from '../../lib/firebase';
+import { auth, db } from '../../lib/firebase';
 import { collection, getDocs, doc, setDoc, serverTimestamp, query, orderBy, limit } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { LayoutDashboard, Music, Users, FileText, Settings, LogOut, Plus, Type, Palette, Upload } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
@@ -83,14 +82,6 @@ export default function AdminDashboardClient() {
   );
 }
 
-async function uploadImageToStorage(file: File): Promise<string> {
-  if (!file) throw new Error("No file provided");
-  const uniqueName = `images/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-  const storageRef = ref(storage, uniqueName);
-  const uploadResult = await uploadBytes(storageRef, file);
-  return await getDownloadURL(uploadResult.ref);
-}
-
 function DashboardView() {
   const [stats, setStats] = useState({ songs: 0, artists: 0, news: 0, plays: 0 });
 
@@ -162,22 +153,8 @@ function SongsView() {
   const [artist, setArtist] = useState('');
   const [audioUrl, setAudioUrl] = useState('');
   const [coverImage, setCoverImage] = useState('');
+  const [description, setDescription] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [uploadingImage, setUploadingImage] = useState(false);
-
-  const handleImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if(!file) return;
-    setUploadingImage(true);
-    try {
-      const url = await uploadImageToStorage(file);
-      setCoverImage(url);
-    } catch (err: any) {
-      alert("Image upload failed: " + err.message);
-    } finally {
-      setUploadingImage(false);
-    }
-  };
 
   const handlePublish = async () => {
     if(!title || !artist || !audioUrl || !coverImage) return alert('All fields required');
@@ -193,6 +170,7 @@ function SongsView() {
         artist,
         audioUrl,
         coverImage,
+        description: description || '',
         plays: 0,
         slug,
         userId: auth.currentUser.uid,
@@ -200,7 +178,7 @@ function SongsView() {
         updatedAt: serverTimestamp()
       });
       alert('Song Published!');
-      setTitle(''); setArtist(''); setAudioUrl(''); setCoverImage('');
+      setTitle(''); setArtist(''); setAudioUrl(''); setCoverImage(''); setDescription('');
       setAdding(false);
     } catch(err: any) {
       alert("Error: " + err.message);
@@ -225,11 +203,11 @@ function SongsView() {
              <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Title</label><input type="text" value={title} onChange={(e)=>setTitle(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00FF00]" placeholder="Song Title" /></div>
              <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Artist</label><input type="text" value={artist} onChange={(e)=>setArtist(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00FF00]" placeholder="Artist Name" /></div>
              <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Audio URL (Google Drive/S3/Direct)</label><input type="text" value={audioUrl} onChange={(e)=>setAudioUrl(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00FF00]" placeholder="https://..." /></div>
+             <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Description (Optional)</label><textarea value={description} onChange={(e)=>setDescription(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00FF00]" rows={3} placeholder="Song description, lyrics, etc..." /></div>
              <div>
-               <label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Cover Art Image</label>
-               <input type="file" accept="image/*" onChange={handleImageFileChange} disabled={uploadingImage} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00FF00] file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:uppercase file:tracking-widest file:bg-zinc-100 file:text-black hover:file:bg-[#00FF00] transition" />
-               {uploadingImage && <p className="text-xs text-zinc-500 mt-2 font-bold uppercase tracking-widest">Uploading image...</p>}
-               {coverImage && !uploadingImage && <img src={coverImage} alt="Cover Preview" className="mt-4 w-32 h-32 object-cover rounded-xl shadow-md border border-zinc-200" />}
+               <label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Cover Art Image URL</label>
+               <input type="text" value={coverImage} onChange={(e) => setCoverImage(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00FF00]" placeholder="https://..." />
+               {coverImage && <img src={coverImage} alt="Cover Preview" className="mt-4 w-32 h-32 object-cover rounded-xl shadow-md border border-zinc-200" />}
              </div>
              
              <div className="flex items-center gap-3 py-2">
@@ -266,21 +244,6 @@ function ArtistsView() {
   const [biography, setBiography] = useState('');
   const [photoUrl, setPhotoUrl] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [uploadingImage, setUploadingImage] = useState(false);
-
-  const handleImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if(!file) return;
-    setUploadingImage(true);
-    try {
-      const url = await uploadImageToStorage(file);
-      setPhotoUrl(url);
-    } catch (err: any) {
-      alert("Image upload failed: " + err.message);
-    } finally {
-      setUploadingImage(false);
-    }
-  };
 
   const handleSave = async () => {
     if(!name || !biography || !photoUrl) return alert('All fields required');
@@ -324,10 +287,9 @@ function ArtistsView() {
              <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Artist Name</label><input type="text" value={name} onChange={(e)=>setName(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00FF00]" placeholder="Name" /></div>
              <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Biography</label><textarea value={biography} onChange={(e)=>setBiography(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00FF00]" rows={4} placeholder="Artist biography..."></textarea></div>
              <div>
-               <label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Photo Image</label>
-               <input type="file" accept="image/*" onChange={handleImageFileChange} disabled={uploadingImage} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00FF00] file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:uppercase file:tracking-widest file:bg-zinc-100 file:text-black hover:file:bg-[#00FF00] transition" />
-               {uploadingImage && <p className="text-xs text-zinc-500 mt-2 font-bold uppercase tracking-widest">Uploading image...</p>}
-               {photoUrl && !uploadingImage && <img src={photoUrl} alt="Artist Preview" className="mt-4 w-32 h-32 object-cover rounded-xl shadow-md border border-zinc-200" />}
+               <label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Photo Image URL</label>
+               <input type="text" value={photoUrl} onChange={(e) => setPhotoUrl(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00FF00]" placeholder="https://..." />
+               {photoUrl && <img src={photoUrl} alt="Artist Preview" className="mt-4 w-32 h-32 object-cover rounded-xl shadow-md border border-zinc-200" />}
              </div>
              <button onClick={handleSave} disabled={submitting} className="bg-black text-white px-6 py-3 rounded-full font-black uppercase tracking-widest text-xs hover:bg-[#00FF00] hover:text-black transition">
                 {submitting ? 'Saving...' : 'Save Artist'}
@@ -352,21 +314,6 @@ function NewsView() {
   const [content, setContent] = useState('');
   const [featuredImage, setFeaturedImage] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [uploadingImage, setUploadingImage] = useState(false);
-
-  const handleImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if(!file) return;
-    setUploadingImage(true);
-    try {
-      const url = await uploadImageToStorage(file);
-      setFeaturedImage(url);
-    } catch (err: any) {
-      alert("Image upload failed: " + err.message);
-    } finally {
-      setUploadingImage(false);
-    }
-  };
 
   const handlePublish = async () => {
     if(!headline || !content) return alert('Headline and content required');
@@ -410,10 +357,9 @@ function NewsView() {
              <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Headline</label><input type="text" value={headline} onChange={(e)=>setHeadline(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00FF00]" placeholder="Breaking News..." /></div>
              <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Content</label><textarea value={content} onChange={(e)=>setContent(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00FF00]" rows={6} placeholder="Write news article here..."></textarea></div>
              <div>
-               <label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Featured Image</label>
-               <input type="file" accept="image/*" onChange={handleImageFileChange} disabled={uploadingImage} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00FF00] file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:uppercase file:tracking-widest file:bg-zinc-100 file:text-black hover:file:bg-[#00FF00] transition" />
-               {uploadingImage && <p className="text-xs text-zinc-500 mt-2 font-bold uppercase tracking-widest">Uploading image...</p>}
-               {featuredImage && !uploadingImage && <img src={featuredImage} alt="News Preview" className="mt-4 w-32 h-32 object-cover rounded-xl shadow-md border border-zinc-200" />}
+               <label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Featured Image URL</label>
+               <input type="text" value={featuredImage} onChange={(e) => setFeaturedImage(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00FF00]" placeholder="https://..." />
+               {featuredImage && <img src={featuredImage} alt="News Preview" className="mt-4 w-32 h-32 object-cover rounded-xl shadow-md border border-zinc-200" />}
              </div>
              
              <div className="flex items-center gap-3 py-2">

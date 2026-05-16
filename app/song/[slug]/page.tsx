@@ -1,24 +1,39 @@
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import PlayButton from './PlayButton';
-import { Download, Heart, Share2, MessageCircle } from 'lucide-react';
+import { Download, Heart, Share2, MessageCircle, FileText } from 'lucide-react';
+import { db } from '../../../lib/firebase';
+import { collection, query, where, getDocs, limit } from 'firebase/firestore';
 
-// Mock DB fetch function
 const getSong = async (slug: string) => {
-  // In production: return await prisma.song.findUnique({ where: { slug } });
-  return {
-    id: '1',
-    slug: slug,
-    title: slug.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
-    artist: 'The Weeknd',
-    coverImage: 'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?auto=format&fit=crop&q=80&w=800&h=800',
-    audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
-    genre: 'R&B / Pop',
-    releaseDate: '2023-10-15',
-    viewCount: 15420,
-    downloadCount: 3040,
-    lyrics: "I've been on my own for long enough...\nMaybe you can show me how to love, maybe...",
-  };
+  try {
+    const q = query(collection(db, 'songs'), where('slug', '==', slug), limit(1));
+    const querySnapshot = await getDocs(q);
+    
+    if (querySnapshot.empty) {
+      return null;
+    }
+    
+    const docSnap = querySnapshot.docs[0];
+    const data = docSnap.data();
+    
+    return {
+      id: docSnap.id,
+      slug: data.slug,
+      title: data.title,
+      artist: data.artist,
+      coverImage: data.coverImage,
+      audioUrl: data.audioUrl,
+      genre: data.genre || 'Unknown Genre',
+      releaseDate: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+      viewCount: data.plays || 0,
+      downloadCount: 0,
+      description: data.description || '',
+    };
+  } catch (error) {
+    console.error("Error fetching song:", error);
+    return null;
+  }
 };
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
@@ -83,11 +98,11 @@ export default async function SongPage({ params }: { params: { slug: string } })
         </div>
       </div>
 
-      {song.lyrics && (
+      {song.description && (
         <section className="bg-white/5 rounded-2xl p-6 md:p-10 font-mono">
-            <h3 className="text-xl font-bold mb-6 flex items-center gap-2"><MessageCircle className="w-5 h-5" /> Lyrics</h3>
+            <h3 className="text-xl font-bold mb-6 flex items-center gap-2"><FileText className="w-5 h-5" /> Description</h3>
             <div className="whitespace-pre-wrap text-white/70 leading-relaxed text-sm md:text-base">
-                {song.lyrics}
+                {song.description}
             </div>
         </section>
       )}
