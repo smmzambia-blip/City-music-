@@ -2,21 +2,32 @@ import { NextResponse } from 'next/server';
 import { GoogleGenAI } from "@google/genai";
 import * as admin from 'firebase-admin';
 import { getFirestore } from 'firebase-admin/firestore';
+import appletConfig from '@/firebase-applet-config.json';
 
 // Initialize Firebase Admin
 if (!admin.apps.length) {
   admin.initializeApp({
-    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'thermal-pursuit-s07pf',
+    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || appletConfig.projectId,
   });
 }
-const db = getFirestore('ai-studio-63b9b9ad-19dc-4719-ada9-985e7f65a884');
+
+const dbId = process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID || (appletConfig as any).firestoreDatabaseId || '(default)';
+const db = getFirestore(dbId === '(default)' ? undefined : dbId);
 
 export async function GET(request: Request) {
   // Security check
   const authHeader = request.headers.get('authorization');
-  if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  const url = new URL(request.url);
+  const querySecret = url.searchParams.get('secret');
+
+  // Allow if no secret is set, OR if one of the secrets matches
+  const secret = process.env.CRON_SECRET;
+  if (secret && authHeader !== `Bearer ${secret}` && querySecret !== secret) {
     console.warn('[Cron] Unauthorized auto-post attempt');
-    return new NextResponse('Unauthorized', { status: 401 });
+    return NextResponse.json({ 
+      error: 'Unauthorized', 
+      details: 'Invalid or missing CRON_SECRET. If you are running this from the dashboard, make sure the CRON_SECRET matches your environment.' 
+    }, { status: 401 });
   }
 
   try {
@@ -34,7 +45,16 @@ export async function GET(request: Request) {
       }
     });
 
-    const newsData = JSON.parse(response.text);
+    const rawText = response.text;
+    let newsData;
+    try {
+      // Clean up markdown code blocks if present
+      const cleanText = rawText.replace(/```json\n?|```/g, '').trim();
+      newsData = JSON.parse(cleanText);
+    } catch (e) {
+      console.error('[Cron] JSON parse error. Raw text:', rawText);
+      throw new Error('Gemini returned an invalid JSON format');
+    }
     
     // Choose a random music-related image from placeholder
     const seeds = ['music', 'concert', 'studio', 'artist', 'stage', 'microphone', 'guitar'];

@@ -504,11 +504,17 @@ function NewsView() {
     setBotRunning(true);
     try {
       const res = await fetch('/api/cron/auto-post');
-      const data = await res.json();
-      if (data.success) {
+      let data;
+      try {
+        data = await res.json();
+      } catch (e) {
+        throw new Error(`Server returned non-JSON response (${res.status} ${res.statusText})`);
+      }
+
+      if (res.ok && data.success) {
         alert('Bot finished successfully! Post created: ' + data.post.headline);
       } else {
-        alert('Bot failed: ' + (data.details || data.error));
+        alert('Bot failed: ' + (data.details || data.error || 'Unknown error'));
       }
     } catch (err: any) {
       alert('Network error running bot: ' + err.message);
