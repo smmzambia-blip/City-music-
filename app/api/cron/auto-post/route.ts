@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { GoogleGenAI } from "@google/genai";
 import { adminDb, adminAuth } from '@/lib/firebase-admin';
 
 import { runAutoPostBot } from '@/lib/bot-actions';
