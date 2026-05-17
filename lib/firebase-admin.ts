@@ -13,22 +13,28 @@ const databaseId = isCustomFirebase
 
 if (!admin.apps.length) {
   try {
-    // Try auto-initialization first (standard for Cloud Run / AI Studio)
-    console.log('[Firebase Admin] Attempting auto-initialization...');
-    admin.initializeApp();
-  } catch (error) {
-    console.log('[Firebase Admin] Auto-init failed, using manual config with project:', projectId);
+    // Standard initialization with explicit projectId from config
+    console.log('[Firebase Admin] Initializing for project:', projectId);
     admin.initializeApp({
       projectId: projectId,
+      // For some environments, explicitly providing the project ID is enough
+      // but we ensure it's not re-declared if already exists
     });
+  } catch (error) {
+    console.error('Firebase Admin initialization error:', error);
   }
 }
 
-// Access firestore. Use the databaseId if provided.
+// Access firestore. Use the databaseId if provided and not '(default)'.
 let dbInstance;
 try {
-  console.log('[Firebase Admin] Connecting to database:', databaseId);
-  dbInstance = admin.firestore(databaseId);
+  if (databaseId && databaseId !== '(default)') {
+    console.log('[Firebase Admin] Connecting to database:', databaseId);
+    dbInstance = admin.firestore(databaseId);
+  } else {
+    console.log('[Firebase Admin] Connecting to default database');
+    dbInstance = admin.firestore();
+  }
 } catch (e) {
   console.error('[Firebase Admin] Failed specific database connection, falling back to default:', e);
   dbInstance = admin.firestore();

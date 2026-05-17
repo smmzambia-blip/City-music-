@@ -21,6 +21,7 @@ export async function GET(request: Request) {
   }
 
   // 2. If not authorized by secret, try verifying Firebase ID Token (dashboard manual trigger)
+  let authError = null;
   if (!isAuthorized && authHeader && authHeader.startsWith('Bearer ')) {
     const token = authHeader.split('Bearer ')[1];
     try {
@@ -29,16 +30,18 @@ export async function GET(request: Request) {
         isAuthorized = true;
         console.log('[Cron] Authorized via Firebase Admin for user:', decodedToken.email);
       }
-    } catch (e) {
+    } catch (e: any) {
+      authError = e.message;
       console.error('[Bot Auth] Admin verification failed:', e);
     }
   }
 
   if (!isAuthorized) {
-    console.warn('[Cron] Unauthorized auto-post attempt');
+    console.warn('[Cron] Unauthorized auto-post attempt. Secret match failed, and Token verification failed.');
     return NextResponse.json({ 
       error: 'Unauthorized', 
-      details: 'Invalid or missing CRON_SECRET. If you are running this from the dashboard, ensure you are logged in.' 
+      details: 'Invalid or missing CRON_SECRET. If you are running this from the dashboard, ensure you are logged in.',
+      authError: authError
     }, { status: 401 });
   }
 
