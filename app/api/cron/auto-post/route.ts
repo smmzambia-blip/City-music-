@@ -37,11 +37,17 @@ export async function GET(request: Request) {
   }
 
   if (!isAuthorized) {
-    console.warn('[Cron] Unauthorized auto-post attempt. Secret match failed, and Token verification failed.');
+    console.warn('[Cron] Unauthorized auto-post attempt.');
     return NextResponse.json({ 
+      success: false,
       error: 'Unauthorized', 
-      details: 'Invalid or missing CRON_SECRET. If you are running this from the dashboard, ensure you are logged in.',
-      authError: authError
+      details: 'Invalid or missing CRON_SECRET or auth token.',
+      authError: authError,
+      debug: {
+        hasSecret: !!secret,
+        hasAuthHeader: !!authHeader,
+        hasQuerySecret: !!querySecret
+      }
     }, { status: 401 });
   }
 

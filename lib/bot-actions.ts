@@ -2,28 +2,36 @@ import { adminDb } from './firebase-admin';
 import { GoogleGenAI } from "@google/genai";
 
 export async function runAutoPostBot() {
-  const apiKey = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     throw new Error('GEMINI_API_KEY not found in environment');
   }
 
   console.log('[Bot Logic] Triggering Gemini generation...');
-  const ai = new GoogleGenAI(apiKey);
-  const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
+  const ai = new GoogleGenAI({
+    apiKey,
+    httpOptions: {
+      headers: {
+        'User-Agent': 'aistudio-build',
+      }
+    }
+  });
 
   const prompt = `Generate a breaking news story about the Zambian music scene. 
   Focus on a fictitious but realistic new song release, artist collaboration, or upcoming major concert in Lusaka. 
   Include a 'headline' and 'content' (3-4 paragraphs). 
   Format the response exactly as a JSON object with keys 'headline' and 'content'.`;
 
-  const response = await model.generateContent({
-    contents: [{ role: "user", parts: [{ text: prompt }] }],
-    generationConfig: {
+  const response = await ai.models.generateContent({
+    model: "gemini-3-flash-preview",
+    contents: prompt,
+    config: {
       responseMimeType: "application/json",
     }
   });
 
-  const rawText = response.response.text();
+  const rawText = response.text;
+  if (!rawText) throw new Error('Gemini returned an empty response');
   let newsData;
   try {
     const cleanText = rawText.replace(/```json\n?|```/g, '').trim();

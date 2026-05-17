@@ -13,30 +13,33 @@ const databaseId = isCustomFirebase
 
 if (!admin.apps.length) {
   try {
-    // Standard initialization with explicit projectId from config
-    console.log('[Firebase Admin] Initializing for project:', projectId);
-    admin.initializeApp({
-      projectId: projectId,
-      // For some environments, explicitly providing the project ID is enough
-      // but we ensure it's not re-declared if already exists
-    });
+    if (isCustomFirebase) {
+      console.log('[Firebase Admin] Initializing with custom project:', projectId);
+      admin.initializeApp({ projectId });
+    } else {
+      // In AI Studio, zero-config init behaves best
+      console.log('[Firebase Admin] Initializing with default config');
+      admin.initializeApp();
+    }
   } catch (error) {
     console.error('Firebase Admin initialization error:', error);
   }
 }
 
-// Access firestore. Use the databaseId if provided and not '(default)'.
+// Access firestore.
 let dbInstance;
 try {
-  if (databaseId && databaseId !== '(default)') {
-    console.log('[Firebase Admin] Connecting to database:', databaseId);
+  // If we have a specific databaseId and it's not default, try it.
+  // But if it's an AI Studio environment, we often should just use the default.
+  if (isCustomFirebase && databaseId && databaseId !== '(default)') {
+    console.log('[Firebase Admin] Connecting to custom database:', databaseId);
     dbInstance = admin.firestore(databaseId);
   } else {
-    console.log('[Firebase Admin] Connecting to default database');
+    // For AI Studio, always try default first.
     dbInstance = admin.firestore();
   }
 } catch (e) {
-  console.error('[Firebase Admin] Failed specific database connection, falling back to default:', e);
+  console.error('[Firebase Admin] Firestore connection failed, trying default:', e);
   dbInstance = admin.firestore();
 }
 
