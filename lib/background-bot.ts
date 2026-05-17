@@ -1,4 +1,5 @@
 import { adminDb } from './firebase-admin';
+import { runAutoPostBot } from './bot-actions';
 
 let isRunning = false;
 
@@ -47,20 +48,15 @@ async function checkAndRunAutoPost() {
     const lastRun = settings.lastRun?.toDate?.()?.getTime() || 0;
 
     if (now - lastRun >= intervalMs) {
-      console.log('[Background Bot] Time to auto-post!');
+      console.log('[Background Bot] Time to auto-post! Running logic directly...');
       
-      const secret = process.env.CRON_SECRET || 'zedtunes-internal-secret';
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-      const res = await fetch(`${baseUrl}/api/cron/auto-post?secret=${secret}`);
+      const result = await runAutoPostBot();
       
-      const data = await res.json();
-      if (res.ok && data.success) {
-        console.log('[Background Bot] Auto-post successful:', data.post.headline);
+      if (result && result.id) {
+        console.log('[Background Bot] Auto-post successful:', result.post.headline);
         await adminDb.collection('settings').doc('auto-post').set({
           lastRun: new Date()
         }, { merge: true });
-      } else {
-        console.error('[Background Bot] Auto-post failed:', data);
       }
     }
   } catch (err: any) {

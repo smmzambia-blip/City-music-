@@ -2,5 +2,7 @@
   "name": "ZedTunes",
   "description": "The fastest modern SEO-optimized music platform in Zambia.",
   "requestFramePermissions": [],
-  "majorCapabilities": []
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }

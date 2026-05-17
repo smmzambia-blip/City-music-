@@ -7,7 +7,6 @@ import { collection, onSnapshot, getDocs, doc, setDoc, serverTimestamp, query, o
 import { LayoutDashboard, Music, Users, FileText, Settings, LogOut, Plus, Palette, Trash2, Image as ImageIcon, Copy, Check, ExternalLink } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useSettings } from '@/components/SettingsProvider';
-import { GoogleGenAI } from "@google/genai";
 
 export default function AdminDashboardClient() {
   const router = useRouter();
