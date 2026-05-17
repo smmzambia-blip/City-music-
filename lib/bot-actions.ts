@@ -30,14 +30,14 @@ export async function runAutoPostBot() {
     }
   });
 
-  const rawText = response.text;
-  if (!rawText) throw new Error('Gemini returned an empty response');
+  const text = response.text;
+  if (!text) throw new Error('Gemini returned an empty response');
   let newsData;
   try {
-    const cleanText = rawText.replace(/```json\n?|```/g, '').trim();
+    const cleanText = text.replace(/```json\n?|```/g, '').trim();
     newsData = JSON.parse(cleanText);
   } catch (e) {
-    console.error('[Bot Logic] JSON parse error:', rawText);
+    console.error('[Bot Logic] JSON parse error:', text);
     throw new Error('Gemini returned an invalid JSON format');
   }
 

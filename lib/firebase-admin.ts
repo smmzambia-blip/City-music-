@@ -29,17 +29,16 @@ if (!admin.apps.length) {
 // Access firestore.
 let dbInstance;
 try {
-  // If we have a specific databaseId and it's not default, try it.
-  // But if it's an AI Studio environment, we often should just use the default.
-  if (isCustomFirebase && databaseId && databaseId !== '(default)') {
-    console.log('[Firebase Admin] Connecting to custom database:', databaseId);
+  // If we have a specific databaseId, use it.
+  if (databaseId && databaseId !== '(default)') {
+    console.log('[Firebase Admin] Connecting to database:', databaseId);
     dbInstance = admin.firestore(databaseId);
   } else {
-    // For AI Studio, always try default first.
+    console.log('[Firebase Admin] Connecting to default database');
     dbInstance = admin.firestore();
   }
 } catch (e) {
-  console.error('[Firebase Admin] Firestore connection failed, trying default:', e);
+  console.error('[Firebase Admin] Firestore connection failed:', e);
   dbInstance = admin.firestore();
 }
 
