@@ -13,33 +13,29 @@ const databaseId = isCustomFirebase
 
 if (!admin.apps.length) {
   try {
-    console.log('[Firebase Admin] Initializing for project:', projectId);
+    console.log('[Firebase Admin] Initializing with Project ID:', projectId);
     admin.initializeApp({
-      projectId: projectId,
+      projectId: projectId || undefined,
     });
   } catch (error) {
-    console.error('Firebase Admin initialization error:', error);
+    console.error('[Firebase Admin] Fatal Initialization Error:', error);
   }
 }
+
+console.log('[Firebase Admin] Firestore Database ID Target:', databaseId);
 
 // Access firestore.
 let dbInstance;
 try {
-  // If we have a specific databaseId and it's not '(default)', try to use it.
   if (databaseId && databaseId !== '(default)') {
-    console.log('[Firebase Admin] Connecting to database:', databaseId);
-    try {
-      dbInstance = admin.firestore(databaseId);
-    } catch (innerError) {
-      console.warn('[Firebase Admin] Specific database connection failed, falling back to default:', innerError);
-      dbInstance = admin.firestore();
-    }
+    console.log('[Firebase Admin] Using named database instance:', databaseId);
+    dbInstance = admin.firestore(databaseId);
   } else {
-    console.log('[Firebase Admin] Connecting to default database');
+    console.log('[Firebase Admin] Using default database instance');
     dbInstance = admin.firestore();
   }
 } catch (e) {
-  console.error('[Firebase Admin] Firestore provider failed:', e);
+  console.error('[Firebase Admin] Firestore instance creation failed:', e);
   dbInstance = admin.firestore();
 }
 
