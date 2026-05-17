@@ -30,7 +30,7 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const querySecret = url.searchParams.get('secret');
 
-  const secret = process.env.CRON_SECRET;
+  const secret = process.env.CRON_SECRET || 'zedtunes-internal-secret';
   let isAuthorized = false;
 
   // 1. Check if cron secret matches (standard cron job)
@@ -65,18 +65,18 @@ export async function GET(request: Request) {
     console.log('[Cron] Fetching news from Gemini...');
     
     const ai = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY as string });
+    const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
     
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: "Generate a breaking news story about the Zambian music scene. " +
+    const response = await model.generateContent({
+      contents: [{ role: "user", parts: [{ text: "Generate a breaking news story about the Zambian music scene. " +
                 "Include a 'headline' and 'content' (about 3-4 paragraphs). " +
-                "Format the response exactly as a JSON object with keys 'headline' and 'content'.",
-      config: {
+                "Format the response exactly as a JSON object with keys 'headline' and 'content'." }] }],
+      generationConfig: {
         responseMimeType: "application/json",
       }
     });
 
-    const rawText = response.text;
+    const rawText = response.response.text();
     let newsData;
     try {
       // Clean up markdown code blocks if present

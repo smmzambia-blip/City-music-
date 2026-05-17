@@ -584,59 +584,55 @@ function NewsView() {
     }
   };
 
+  const [autoPostSettings, setAutoPostSettings] = useState({
+    enabled: false,
+    intervalHours: 24,
+  });
+
+  useEffect(() => {
+    const unsub = onSnapshot(doc(db, 'settings', 'auto-post'), (snap) => {
+      if (snap.exists()) {
+        setAutoPostSettings(snap.data() as any);
+      }
+    });
+    return () => unsub();
+  }, []);
+
+  const saveAutoPostSettings = async (enabled: boolean, interval: number) => {
+    try {
+      await setDoc(doc(db, 'settings', 'auto-post'), {
+        enabled,
+        intervalHours: interval,
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+      alert('Schedule updated!');
+    } catch (err: any) {
+      alert('Failed to save schedule: ' + err.message);
+    }
+  };
+
   const runBot = async () => {
     if (!auth.currentUser) return alert('Not authenticated');
     
     setBotRunning(true);
-    setBotStep('Connecting to AI...');
+    setBotStep('Triggering server bot...');
     try {
-      const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
-      if (!apiKey) {
-        throw new Error('Gemini API Key (NEXT_PUBLIC_GEMINI_API_KEY) not found in environment. Please check your AI Studio secrets.');
-      }
-
-      setBotStep('Researching Zambian music scene...');
-      const ai = new GoogleGenAI({ apiKey });
-      
-      const response = await ai.getGenerativeModel({ model: "gemini-1.5-flash" }).generateContent({
-        contents: [{ role: "user", parts: [{ text: "Write a short breaking news story (150 words max) about a new music release or concert in Zambia. Return ONLY a JSON object: {\"headline\": \"...\", \"content\": \"...\"}" }] }],
-        generationConfig: {
-          responseMimeType: "application/json",
-          temperature: 0.7,
+      const token = await auth.currentUser.getIdToken();
+      const res = await fetch('/api/cron/auto-post', {
+        headers: {
+          'Authorization': `Bearer ${token}`
         }
       });
-
-      setBotStep('Formatting article...');
-      const rawText = response.response.text();
-      let newsData;
-      try {
-        const cleanText = rawText.replace(/```json\n?|```/g, '').trim();
-        newsData = JSON.parse(cleanText);
-      } catch (e) {
-        console.error('JSON parse error. Raw text:', rawText);
-        throw new Error('AI returned invalid format. Retrying...');
+      
+      const data = await res.json();
+      
+      if (!res.ok) {
+        throw new Error(data.details || data.error || 'Server error');
       }
 
-      setBotStep('Picking featured image...');
-      const seeds = ['music', 'concert', 'studio', 'artist', 'stage', 'microphone', 'guitar', 'dj', 'crowd'];
-      const randomSeed = seeds[Math.floor(Math.random() * seeds.length)];
-      const imageUrl = `https://picsum.photos/seed/${randomSeed}-${Date.now()}/800/600`;
-
-      setBotStep('Saving to ZedTunes feed...');
-      const botPost = {
-        headline: newsData.headline,
-        content: newsData.content,
-        featuredImage: imageUrl,
-        userId: 'system-auto-bot',
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-      };
-
-      await addDoc(collection(db, 'news'), botPost);
-      
       setBotStep('Success!');
       setTimeout(() => setBotStep(''), 2000);
-      alert('Bot Published: ' + newsData.headline);
+      alert('Bot Published: ' + data.post.headline);
     } catch (err: any) {
       console.error('Bot Error:', err);
       alert('Bot failed: ' + err.message);
@@ -647,15 +643,37 @@ function NewsView() {
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-       <div className="flex justify-between items-center border-b border-zinc-100 pb-4">
-         <h2 className="text-2xl font-black italic tracking-tighter uppercase">News & Blog</h2>
-         <div className="flex gap-2">
+       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-100 pb-4">
+         <div>
+           <h2 className="text-2xl font-black italic tracking-tighter uppercase">News Feed</h2>
+           <p className="text-zinc-500 text-sm font-medium mt-1">Manage latest music news and AI updates.</p>
+         </div>
+         <div className="flex flex-wrap gap-2">
+            <div className="flex items-center gap-3 bg-zinc-50 border border-zinc-200 px-4 py-2 rounded-full">
+              <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Auto-Post:</span>
+              <select 
+                value={autoPostSettings.intervalHours} 
+                onChange={(e) => saveAutoPostSettings(autoPostSettings.enabled, parseInt(e.target.value))}
+                className="bg-transparent text-[10px] font-black uppercase outline-none"
+              >
+                <option value={6}>6 Hours</option>
+                <option value={12}>12 Hours</option>
+                <option value={24}>24 Hours</option>
+                <option value={48}>48 Hours</option>
+              </select>
+              <button 
+                onClick={() => saveAutoPostSettings(!autoPostSettings.enabled, autoPostSettings.intervalHours)}
+                className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md transition ${autoPostSettings.enabled ? 'bg-green-600 text-white shadow-sm' : 'bg-zinc-200 text-zinc-500'}`}
+              >
+                {autoPostSettings.enabled ? 'Enabled' : 'Disabled'}
+              </button>
+            </div>
             <button 
               onClick={runBot} 
               disabled={botRunning}
               className="flex items-center gap-2 bg-black text-[var(--color-primary)] px-4 py-2 rounded-full font-black uppercase tracking-widest text-[10px] hover:opacity-80 transition disabled:opacity-50"
             >
-              {botRunning ? (botStep || 'Bot is active...') : 'Run Auto-Post Bot'}
+              {botRunning ? (botStep || 'Bot is active...') : 'Run Now'}
             </button>
             <button onClick={()=>setAdding(!adding)} className="flex items-center gap-2 bg-[var(--color-primary)] text-black px-4 py-2 rounded-full font-black uppercase tracking-widest text-xs hover:bg-black hover:text-[var(--color-primary)] transition">
               {adding ? 'Cancel' : <><Plus className="w-4 h-4"/> Publish News</>}
