@@ -1,7 +1,6 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { initializeFirestore, memoryLocalCache } from 'firebase/firestore';
-import { getStorage } from 'firebase/storage';
 
 import appletConfig from '../firebase-applet-config.json';
 
@@ -36,5 +35,6 @@ export const db = databaseId && databaseId !== '(default)'
     } as any);
 
 export const auth = getAuth(app);
-export const storage = getStorage(app);
+// Storage is disabled per user request (free plan limits)
+// export const storage = getStorage(app);
 

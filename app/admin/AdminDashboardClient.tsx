@@ -1,8 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { auth, db, storage } from '../../lib/firebase';
+import { auth, db } from '../../lib/firebase';
 import { handleFirestoreError, OperationType } from '../../lib/firebase-errors';
-import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { collection, onSnapshot, getDocs, doc, setDoc, serverTimestamp, query, orderBy, deleteDoc, addDoc } from 'firebase/firestore';
 import { LayoutDashboard, Music, Users, FileText, Settings, LogOut, Plus, Palette, Trash2, Image as ImageIcon, Copy, Check, ExternalLink } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -33,7 +32,6 @@ export default function AdminDashboardClient() {
     { id: 'songs', label: 'Songs', icon: <Music className="w-5 h-5" /> },
     { id: 'artists', label: 'Artists', icon: <Users className="w-5 h-5" /> },
     { id: 'news', label: 'News', icon: <FileText className="w-5 h-5" /> },
-    { id: 'media', label: 'Media Library', icon: <ImageIcon className="w-5 h-5" /> },
     { id: 'appearance', label: 'Appearance', icon: <Palette className="w-5 h-5" /> },
     { id: 'settings', label: 'Settings', icon: <Settings className="w-5 h-5" /> },
   ];
@@ -80,7 +78,6 @@ export default function AdminDashboardClient() {
          {activeTab === 'songs' && <SongsView />}
          {activeTab === 'artists' && <ArtistsView />}
          {activeTab === 'news' && <NewsView />}
-         {activeTab === 'media' && <MediaView />}
          {activeTab === 'appearance' && <AppearanceView />}
          {activeTab === 'settings' && <SettingsView />}
       </div>
@@ -160,7 +157,6 @@ function SongsView() {
   const [artist, setArtist] = useState('');
   const [audioUrl, setAudioUrl] = useState('');
   const [coverImageUrl, setCoverImageUrl] = useState('');
-  const [coverFile, setCoverFile] = useState<File | null>(null);
   const [description, setDescription] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [publishStep, setPublishStep] = useState('');
@@ -187,7 +183,7 @@ function SongsView() {
 
   const handlePublish = async () => {
     if(!title || !artist || !audioUrl) return alert('Title, artist and audio URL are required');
-    if(!coverFile && !coverImageUrl) return alert('Please provide a cover art URL or upload an image');
+    if(!coverImageUrl) return alert('Please provide a cover art URL');
     if(!auth.currentUser) return alert('Not authenticated');
     
     setSubmitting(true);
@@ -196,24 +192,7 @@ function SongsView() {
       const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + Date.now();
       songId = slug.substring(0, 128);
       
-      let imageUrl = coverImageUrl;
-      if (coverFile) {
-        setPublishStep('Uploading cover art...');
-        const fileRef = ref(storage, `song-covers/${songId}-${coverFile.name}`);
-        const uploadTask = uploadBytesResumable(fileRef, coverFile);
-        
-        await new Promise((resolve, reject) => {
-          uploadTask.on('state_changed', 
-            (snapshot) => {
-              const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-              setPublishStep(`Uploading Cover: ${Math.round(progress)}%`);
-            }, 
-            (error) => reject(error), 
-            () => resolve(null)
-          );
-        });
-        imageUrl = await getDownloadURL(uploadTask.snapshot.ref);
-      }
+      const imageUrl = coverImageUrl;
       
       setPublishStep('Saving song data...');
       await setDoc(doc(db, 'songs', songId), {
@@ -230,7 +209,7 @@ function SongsView() {
       });
       setPublishStep('Success!');
       alert('Song Published!');
-      setTitle(''); setArtist(''); setAudioUrl(''); setCoverImageUrl(''); setCoverFile(null); setDescription('');
+      setTitle(''); setArtist(''); setAudioUrl(''); setCoverImageUrl(''); setDescription('');
       setAdding(false);
     } catch(err: any) {
       console.error('Publish Error:', err);
@@ -273,20 +252,9 @@ function SongsView() {
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <label className="block text-xs font-bold uppercase tracking-widest text-zinc-500">Cover Art URL</label>
-                  <button onClick={() => {setActiveTab('media'); setAdding(false);}} className="text-[10px] font-black text-black underline flex items-center gap-1 hover:text-[var(--color-primary)]">
-                    <ImageIcon className="w-3 h-3" /> Select from Library
-                  </button>
                 </div>
                 <input type="text" value={coverImageUrl} onChange={(e)=>setCoverImageUrl(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--color-primary)] mb-2" placeholder="https://..." />
-                
-                <label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">OR Upload Cover Image</label>
-                <input 
-                  type="file" 
-                  accept="image/*"
-                  onChange={(e) => setCoverFile(e.target.files?.[0] || null)} 
-                  className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--color-primary)]" 
-                />
-                {coverFile && <img src={URL.createObjectURL(coverFile)} alt="Cover Preview" className="mt-4 w-32 h-32 object-cover rounded-xl shadow-md border border-zinc-200" />}
+                <p className="text-[10px] text-zinc-400">Please use an external image host like PostImages or ImgBB since Firebase Storage is disabled.</p>
               </div>
               
               <div className="flex items-center gap-3 py-2">
@@ -349,7 +317,6 @@ function ArtistsView() {
   const [name, setName] = useState('');
   const [biography, setBiography] = useState('');
   const [photoUrl, setPhotoUrl] = useState('');
-  const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [saveStep, setSaveStep] = useState('');
 
@@ -375,7 +342,7 @@ function ArtistsView() {
 
   const handleSave = async () => {
     if(!name || !biography) return alert('Name and biography are required');
-    if(!photoFile && !photoUrl) return alert('Please provide a photo URL or upload a photo');
+    if(!photoUrl) return alert('Please provide a photo URL');
     if(!auth.currentUser) return alert('Not authenticated');
     
     setSubmitting(true);
@@ -383,24 +350,7 @@ function ArtistsView() {
     try {
       artistId = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').substring(0, 100) + '-' + Date.now();
       
-      let finalPhotoUrl = photoUrl;
-      if (photoFile) {
-        setSaveStep('Uploading photo...');
-        const fileRef = ref(storage, `artist-photos/${artistId}-${photoFile.name}`);
-        const uploadTask = uploadBytesResumable(fileRef, photoFile);
-        
-        await new Promise((resolve, reject) => {
-          uploadTask.on('state_changed', 
-            (snapshot) => {
-              const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-              setSaveStep(`Uploading Photo: ${Math.round(progress)}%`);
-            }, 
-            (error) => reject(error), 
-            () => resolve(null)
-          );
-        });
-        finalPhotoUrl = await getDownloadURL(uploadTask.snapshot.ref);
-      }
+      const finalPhotoUrl = photoUrl;
       
       setSaveStep('Saving artist profile...');
       await setDoc(doc(db, 'artists', artistId), {
@@ -413,7 +363,7 @@ function ArtistsView() {
       });
       setSaveStep('Success!');
       alert('Artist Added!');
-      setName(''); setBiography(''); setPhotoUrl(''); setPhotoFile(null);
+      setName(''); setBiography(''); setPhotoUrl('');
       setAdding(false);
     } catch(err: any) {
       console.error('Save Error:', err);
@@ -445,17 +395,9 @@ function ArtistsView() {
               <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Artist Name</label><input type="text" value={name} onChange={(e)=>setName(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--color-primary)]" placeholder="Name" /></div>
               <div><label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Biography</label><textarea value={biography} onChange={(e)=>setBiography(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--color-primary)]" rows={4} placeholder="Artist biography..."></textarea></div>
               <div>
-                <label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Photo URL (Optional if uploading)</label>
-                <input type="text" value={photoUrl} onChange={(e)=>setPhotoUrl(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--color-primary)] mb-2" placeholder="https://..." />
-                
-                <label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">OR Upload Photo</label>
-                <input 
-                  type="file" 
-                  accept="image/*"
-                  onChange={(e) => setPhotoFile(e.target.files?.[0] || null)} 
-                  className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--color-primary)]" 
-                />
-                {photoFile && <img src={URL.createObjectURL(photoFile)} alt="Artist Preview" className="mt-4 w-32 h-32 object-cover rounded-xl shadow-md border border-zinc-200" />}
+                <label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Photo URL</label>
+                <input type="text" value={photoUrl} onChange={(e)=>setPhotoUrl(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--color-primary)] mb-1" placeholder="https://..." />
+                <p className="text-[10px] text-zinc-400">Please use an external image host since Firebase Storage is disabled.</p>
               </div>
               <button onClick={handleSave} disabled={submitting} className="bg-black text-white px-6 py-3 rounded-full font-black uppercase tracking-widest text-xs hover:bg-[var(--color-primary)] hover:text-black transition">
                  {submitting ? (saveStep || 'Saving...') : 'Save Artist'}
@@ -501,7 +443,6 @@ function NewsView() {
   const [headline, setHeadline] = useState('');
   const [content, setContent] = useState('');
   const [featuredImageUrl, setFeaturedImageUrl] = useState('');
-  const [file, setFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [publishStep, setPublishStep] = useState('');
   const [botRunning, setBotRunning] = useState(false);
@@ -529,7 +470,7 @@ function NewsView() {
 
   const handlePublish = async () => {
     if(!headline || !content) return alert('Headline and content are required');
-    if(!file && !featuredImageUrl) return alert('Please provide a featured image URL or upload an image');
+    if(!featuredImageUrl) return alert('Please provide a featured image URL');
     if(!auth.currentUser) return alert('Not authenticated');
     
     setSubmitting(true);
@@ -537,24 +478,7 @@ function NewsView() {
     try {
       newsId = headline.toLowerCase().replace(/[^a-z0-9]+/g, '-').substring(0, 100) + '-' + Date.now();
       
-      let finalImageUrl = featuredImageUrl;
-      if (file) {
-        setPublishStep('Uploading image...');
-        const fileRef = ref(storage, `news-images/${newsId}-${file.name}`);
-        const uploadTask = uploadBytesResumable(fileRef, file);
-        
-        await new Promise((resolve, reject) => {
-          uploadTask.on('state_changed', 
-            (snapshot) => {
-              const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-              setPublishStep(`Uploading Image: ${Math.round(progress)}%`);
-            }, 
-            (error) => reject(error), 
-            () => resolve(null)
-          );
-        });
-        finalImageUrl = await getDownloadURL(uploadTask.snapshot.ref);
-      }
+      const finalImageUrl = featuredImageUrl;
       
       setPublishStep('Saving article...');
       await setDoc(doc(db, 'news', newsId), {
@@ -567,7 +491,7 @@ function NewsView() {
       });
       setPublishStep('Success!');
       alert('News Published!');
-      setHeadline(''); setContent(''); setFeaturedImageUrl(''); setFile(null);
+      setHeadline(''); setContent(''); setFeaturedImageUrl('');
       setAdding(false);
     } catch(err: any) {
       console.error('Publish Error:', err);
@@ -693,20 +617,9 @@ function NewsView() {
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <label className="block text-xs font-bold uppercase tracking-widest text-zinc-500">Featured Image URL</label>
-                  <button onClick={() => {setActiveTab('media'); setAdding(false);}} className="text-[10px] font-black text-black underline flex items-center gap-1 hover:text-[var(--color-primary)]">
-                    <ImageIcon className="w-3 h-3" /> Select from Library
-                  </button>
                 </div>
-                <input type="text" value={featuredImageUrl} onChange={(e)=>setFeaturedImageUrl(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--color-primary)] mb-2" placeholder="https://..." />
-
-                <label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">OR Upload Image</label>
-                <input 
-                  type="file" 
-                  accept="image/*"
-                  onChange={(e) => setFile(e.target.files?.[0] || null)} 
-                  className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--color-primary)]" 
-                />
-                {file && <img src={URL.createObjectURL(file)} alt="News Preview" className="mt-4 w-32 h-32 object-cover rounded-xl shadow-md border border-zinc-200" />}
+                <input type="text" value={featuredImageUrl} onChange={(e)=>setFeaturedImageUrl(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--color-primary)] mb-1" placeholder="https://..." />
+                <p className="text-[10px] text-zinc-400">Please use an external image host since Firebase Storage is disabled.</p>
               </div>
               
               <div className="flex items-center gap-3 py-2">
@@ -858,154 +771,25 @@ function SettingsView() {
 }
 
 function MediaView() {
-  const [file, setFile] = useState<File | null>(null);
-  const [uploading, setUploading] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [mediaList, setMediaList] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [copiedId, setCopiedId] = useState<string | null>(null);
-
-  useEffect(() => {
-    const path = 'media';
-    const q = query(collection(db, path), orderBy('createdAt', 'desc'));
-    const unsub = onSnapshot(q, (snap) => {
-      setMediaList(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-      setLoading(false);
-    }, (err) => handleFirestoreError(err, OperationType.LIST, path));
-    return () => unsub();
-  }, []);
-
-  const handleUpload = async () => {
-    if (!file) return alert('Select a file first');
-    if (!auth.currentUser) return alert('Not authenticated');
-
-    setUploading(true);
-    setProgress(0);
-    
-    const mediaId = `media-${Date.now()}`;
-    const fileRef = ref(storage, `media/${mediaId}-${file.name}`);
-    const uploadTask = uploadBytesResumable(fileRef, file);
-
-    try {
-      await new Promise((resolve, reject) => {
-        uploadTask.on('state_changed', 
-          (snapshot) => {
-            const p = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-            setProgress(p);
-          }, 
-          (error) => reject(error), 
-          () => resolve(null)
-        );
-      });
-
-      const url = await getDownloadURL(uploadTask.snapshot.ref);
-      
-      await setDoc(doc(db, 'media', mediaId), {
-        name: file.name,
-        url,
-        type: file.type,
-        userId: auth.currentUser.uid,
-        createdAt: serverTimestamp()
-      });
-
-      setFile(null);
-      alert('File uploaded to vault!');
-    } catch (err: any) {
-      alert('Upload failed: ' + err.message);
-    } finally {
-      setUploading(false);
-      setProgress(0);
-    }
-  };
-
-  const copyToClipboard = (url: string, id: string) => {
-    navigator.clipboard.writeText(url);
-    setCopiedId(id);
-    setTimeout(() => setCopiedId(null), 2000);
-  };
-
-  const handleDelete = async (id: string) => {
-    if (!confirm('Delete this from the vault?')) return;
-    try {
-      await deleteDoc(doc(db, 'media', id));
-    } catch (err: any) {
-      alert('Delete failed: ' + err.message);
-    }
-  };
-
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
        <div className="border-b border-zinc-100 pb-4">
          <h2 className="text-2xl font-black italic tracking-tighter uppercase">Media Vault</h2>
-         <p className="text-zinc-500 text-sm font-medium mt-1">Upload images/media here to get URLs for your posts.</p>
+         <p className="text-zinc-500 text-sm font-medium mt-1">Firebase Storage is currently disabled on your plan.</p>
        </div>
 
-       <div className="bg-zinc-50 border border-zinc-200 p-6 rounded-2xl">
-          <h3 className="font-black uppercase tracking-widest text-sm mb-4">Upload New Media</h3>
-          <div className="flex flex-col sm:flex-row gap-4">
-            <input 
-              type="file" 
-              onChange={(e) => setFile(e.target.files?.[0] || null)}
-              className="flex-1 bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--color-primary)]" 
-            />
-            <button 
-              onClick={handleUpload} 
-              disabled={uploading || !file} 
-              className="bg-black text-[var(--color-primary)] px-8 py-3 rounded-full font-black uppercase tracking-widest text-xs hover:opacity-80 transition disabled:opacity-50"
-            >
-              {uploading ? `Uploading ${Math.round(progress)}%` : 'Upload'}
-            </button>
+       <div className="bg-zinc-50 border border-zinc-200 p-10 rounded-2xl text-center">
+          <ImageIcon className="w-12 h-12 mx-auto text-zinc-300 mb-4" />
+          <p className="font-bold uppercase tracking-widest text-zinc-400 text-xs mb-4">File uploads are unavailable on this environment.</p>
+          <div className="max-w-md mx-auto space-y-4 text-sm text-zinc-600">
+            <p>To add images, please host them on a service like:</p>
+            <ul className="flex flex-wrap justify-center gap-3 font-bold uppercase tracking-tighter text-[10px]">
+              <li className="bg-white px-3 py-1 rounded border border-zinc-200">PostImages.org</li>
+              <li className="bg-white px-3 py-1 rounded border border-zinc-200">ImgBB.com</li>
+              <li className="bg-white px-3 py-1 rounded border border-zinc-200">Cloudinary</li>
+            </ul>
+            <p className="mt-4">Then copy the "Direct Link" and paste it into the URL fields when creating songs or news.</p>
           </div>
-       </div>
-
-       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {loading ? (
-            <p className="text-zinc-400 font-bold uppercase tracking-widest text-xs">Loading vault...</p>
-          ) : mediaList.length > 0 ? (
-            mediaList.map((item) => (
-              <div key={item.id} className="bg-white border border-zinc-200 rounded-2xl overflow-hidden group shadow-sm hover:shadow-md transition-shadow">
-                <div className="aspect-video bg-zinc-100 relative">
-                  {item.type?.startsWith('image/') ? (
-                    <img src={item.url} alt={item.name} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                       <ImageIcon className="w-8 h-8 text-zinc-300" />
-                    </div>
-                  )}
-                  <button 
-                    onClick={() => handleDelete(item.id)}
-                    className="absolute top-2 right-2 p-1.5 bg-white/90 rounded-full text-zinc-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-                <div className="p-4 space-y-3">
-                   <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 truncate">{item.name}</p>
-                   <div className="flex gap-2">
-                     <button 
-                       onClick={() => copyToClipboard(item.url, item.id)}
-                       className="flex-1 flex items-center justify-center gap-2 bg-zinc-900 text-white py-2 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-[var(--color-primary)] hover:text-black transition-colors"
-                     >
-                       {copiedId === item.id ? <><Check className="w-3 h-3" /> Copied</> : <><Copy className="w-3 h-3" /> Copy Link</>}
-                     </button>
-                     <a 
-                       href={item.url} 
-                       target="_blank" 
-                       rel="noopener noreferrer" 
-                       className="p-2 bg-zinc-100 rounded-lg text-zinc-400 hover:text-black transition-colors"
-                     >
-                       <ExternalLink className="w-4 h-4" />
-                     </a>
-                   </div>
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className="col-span-full py-20 text-center bg-zinc-50 rounded-2xl border border-dashed border-zinc-200">
-               <ImageIcon className="w-12 h-12 mx-auto text-zinc-200 mb-4" />
-               <p className="text-zinc-400 font-bold uppercase tracking-widest text-xs">Your vault is empty.</p>
-            </div>
-          )}
        </div>
     </div>
   );
